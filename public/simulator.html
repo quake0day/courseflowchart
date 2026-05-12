@@ -66,6 +66,12 @@ aside.sidebar { background: var(--panel); border-right: 1px solid var(--line); d
 }
 .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
 
+.target-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 8px; min-height: 4px; }
+.target-chips:empty + #targetAdd { margin-top: 0; }
+.target-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; background: var(--accent); color: #fff; border-radius: 99px; font-size: 12px; font-weight: 600; }
+.target-chip button { background: rgba(255,255,255,0.18); border: 0; color: #fff; cursor: pointer; padding: 0; width: 18px; height: 18px; border-radius: 50%; font-size: 13px; line-height: 1; font-family: inherit; }
+.target-chip button:hover { background: rgba(255,255,255,0.32); }
+
 .checklist { max-height: 280px; overflow-y: auto; margin-top: 8px; padding: 4px 0; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-soft); }
 .checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
 .checklist label:hover { background: rgba(79,70,229,0.06); }
@@ -114,6 +120,8 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .course-tag { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: #fff; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
 .course-tag.crit { background: var(--crit); color: #fff; border-color: var(--crit); }
 .course-tag.bottleneck { background: var(--warn); color: #fff; border-color: var(--warn); }
+.course-tag.target { background: var(--accent); color: #fff; border-color: var(--accent); }
+.course-row.target { background: var(--accent-soft); border: 1px solid #c7d2fe; }
 
 .empty-state, .info-state {
   background: var(--panel); border: 1px dashed var(--line-strong); border-radius: 12px;
@@ -183,8 +191,19 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
   <div class="section">
     <p class="section-label">Setup</p>
     <div class="field">
-      <label for="target">Target course</label>
-      <select id="target"></select>
+      <label for="preset">Quick load (certificate)</label>
+      <select id="preset">
+        <option value="">— pick a certificate to load its targets —</option>
+        <option value="cybersec">Cybersecurity Certificate</option>
+        <option value="cloud">Cloud Engineering Certificate</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Target courses <span id="targetCount" style="color:var(--muted); font-weight:400;"></span></label>
+      <div class="target-chips" id="targetChips"></div>
+      <select id="targetAdd">
+        <option value="">+ Add a target…</option>
+      </select>
     </div>
     <div class="field-row">
       <div class="field" style="margin-bottom:0">
@@ -294,7 +313,7 @@ const state = {
   courses: [],
   byCode: new Map(),
   // settings
-  target: null,
+  targets: [],
   startSeason: 'Fall',
   startYear: new Date().getFullYear() + 1,
   capPerTerm: 3,
@@ -308,10 +327,24 @@ const state = {
   offeringsFilter: '',
 };
 
+// Undergraduate certificate target presets — the set of courses required
+// (or commonly chosen) for each cert. Reverse-BFS in the planner pulls
+// in all their prereqs automatically.
+const TARGET_PRESETS = {
+  'cybersec': {
+    label: 'Cybersecurity Certificate',
+    targets: ['CSC 301', 'CSC 302', 'CSC 335', 'CSC 402', 'CSC 471', 'CSC 472'],
+  },
+  'cloud': {
+    label: 'Cloud Engineering Certificate',
+    targets: ['CSC 331', 'CSC 335', 'CSC 468', 'CSC 478'],
+  },
+};
+
 function saveState() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify({
-      target: state.target,
+      targets: state.targets,
       startSeason: state.startSeason,
       startYear: state.startYear,
       capPerTerm: state.capPerTerm,
@@ -326,7 +359,8 @@ function restoreState() {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return;
     const o = JSON.parse(raw);
-    if (o.target) state.target = o.target;
+    if (Array.isArray(o.targets)) state.targets = o.targets.slice();
+    else if (typeof o.target === 'string') state.targets = [o.target];  // legacy
     if (o.startSeason) state.startSeason = o.startSeason;
     if (typeof o.startYear === 'number') state.startYear = o.startYear;
     if (typeof o.capPerTerm === 'number') state.capPerTerm = o.capPerTerm;
@@ -342,12 +376,16 @@ function getOffering(code) {
 // =========================================================================
 // Core algorithm — layered DAG longest path with offering & cap constraints
 // =========================================================================
-function planPathTo(targetCode) {
-  if (!targetCode || !state.byCode.has(targetCode)) {
-    return { error: 'Pick a target course.' };
+function planPathTo(targetCodes) {
+  // Normalize: accept a single string or an array.
+  const targets = (Array.isArray(targetCodes) ? targetCodes : [targetCodes])
+    .filter(t => typeof t === 'string' && state.byCode.has(t));
+  const validTargets = targets.filter(t => !state.completed.has(t));
+  if (targets.length === 0) {
+    return { error: 'Pick at least one target course.' };
   }
-  if (state.completed.has(targetCode)) {
-    return { error: `${targetCode} is already marked as completed.` };
+  if (validTargets.length === 0) {
+    return { error: 'All targets are already completed.' };
   }
 
   // Build prereq + dependents maps restricted to known codes.
@@ -362,9 +400,9 @@ function planPathTo(targetCode) {
     }
   }
 
-  // Reverse-BFS from target → needed set (excluding completed).
+  // Reverse-BFS from every target → needed set (excluding completed).
   const needed = new Set();
-  const q = [targetCode];
+  const q = validTargets.slice();
   while (q.length) {
     const c = q.shift();
     if (needed.has(c) || state.completed.has(c)) continue;
@@ -511,10 +549,10 @@ function planPathTo(targetCode) {
   // Phase 2: enforce per-term cap. Strategy: walk terms ascending, if any
   // term has >cap, defer overflow courses (lowest criticality first) to the
   // next valid offering term ≥ t+1, then re-propagate.
-  const targetT = scheduled.get(targetCode);
+  const targetSet = new Set(validTargets);
   function criticalityScore(c) {
-    // Larger = more critical (deferring delays target more). Simple proxy:
-    // depth-to-target measured in topo distance.
+    // Larger = more critical (deferring delays a target more). Depth to
+    // the nearest target measured in topo distance.
     let best = -1;
     const seen = new Set();
     const dq = [[c, 0]];
@@ -522,7 +560,7 @@ function planPathTo(targetCode) {
       const [x, d] = dq.shift();
       if (seen.has(x)) continue;
       seen.add(x);
-      if (x === targetCode) { best = Math.max(best, d); continue; }
+      if (targetSet.has(x)) { best = Math.max(best, d); continue; }
       for (const dep of dependents.get(x) || []) {
         if (needed.has(dep)) dq.push([dep, d + 1]);
       }
@@ -586,9 +624,15 @@ function planPathTo(targetCode) {
     if (delta > 0) bottleneckOf.set(c, delta);
   }
 
-  // Critical path: walk back from target, each step pick prereq with latest scheduledT.
+  // Pick the latest-scheduled target as the headline; its walk-back is the
+  // longest critical path in this multi-target plan.
+  const headlineTarget = validTargets.slice().sort((a, b) =>
+    (scheduled.get(b) ?? -1) - (scheduled.get(a) ?? -1) || a.localeCompare(b)
+  )[0];
+  // Critical path: walk back from headline target, picking the prereq with
+  // the latest scheduledT at each step.
   const critPath = [];
-  let cur = targetCode;
+  let cur = headlineTarget;
   const guard = new Set();
   while (cur && !guard.has(cur)) {
     critPath.unshift(cur);
@@ -601,7 +645,7 @@ function planPathTo(targetCode) {
   const critSet = new Set(critPath);
 
   // Group into terms.
-  const totalTerms = scheduled.get(targetCode) + 1;
+  const totalTerms = Math.max(...validTargets.map(t => scheduled.get(t) ?? 0)) + 1;
   const terms = [];
   for (let t = 0; t < totalTerms; t++) {
     const list = [];
@@ -613,7 +657,10 @@ function planPathTo(targetCode) {
     terms.push({ index: t, season: seasonAt(t), year: state.startYear + yrOff, courses: list });
   }
 
-  return { error: null, terms, critPath, critSet, bottleneckOf, scheduled, totalTerms };
+  return {
+    error: null, terms, critPath, critSet, bottleneckOf, scheduled, totalTerms,
+    targets: validTargets, headlineTarget,
+  };
 }
 
 // =========================================================================
@@ -655,7 +702,10 @@ const WCU_OFFERING_PRESET = {
 // =========================================================================
 // UI
 // =========================================================================
-const targetSelect = document.getElementById('target');
+const targetChipsEl = document.getElementById('targetChips');
+const targetAddSel = document.getElementById('targetAdd');
+const targetCountEl = document.getElementById('targetCount');
+const presetSelect = document.getElementById('preset');
 const seasonSelect = document.getElementById('startSeason');
 const yearInput = document.getElementById('startYear');
 const capInput = document.getElementById('capInput');
@@ -684,7 +734,9 @@ function expandCode(s) {
 }
 function encodeStateToHash() {
   const params = [];
-  if (state.target) params.push(`t=${encodeURIComponent(shortCode(state.target))}`);
+  if (state.targets && state.targets.length) {
+    params.push(`t=${state.targets.map(shortCode).join('|')}`);
+  }
   params.push(`s=${state.startSeason === 'Spring' ? 'S' : 'F'}`);
   params.push(`y=${state.startYear}`);
   params.push(`c=${state.capPerTerm}`);
@@ -708,7 +760,9 @@ function applyHashToState() {
     if (i < 0) continue;
     params.set(pair.slice(0, i), decodeURIComponent(pair.slice(i + 1)));
   }
-  if (params.has('t')) state.target = expandCode(params.get('t'));
+  if (params.has('t')) {
+    state.targets = params.get('t').split('|').map(expandCode).filter(Boolean);
+  }
   if (params.has('s')) state.startSeason = params.get('s') === 'S' ? 'Spring' : 'Fall';
   if (params.has('y')) state.startYear = parseInt(params.get('y'), 10) || state.startYear;
   if (params.has('c')) state.capPerTerm = Math.max(1, parseInt(params.get('c'), 10) || 3);
@@ -759,7 +813,10 @@ function fmtTermLabel(t) {
 function renderSummary(plan) {
   summary.innerHTML = '';
   if (!plan || plan.error) return;
-  const tEl = document.createElement('span'); tEl.className = 'chip'; tEl.innerHTML = `<b>${plan.totalTerms}</b> term${plan.totalTerms === 1 ? '' : 's'} to <b>${state.target}</b>`;
+  const tEl = document.createElement('span'); tEl.className = 'chip';
+  const labelHead = plan.headlineTarget || (plan.targets && plan.targets[0]) || '';
+  const extra = plan.targets && plan.targets.length > 1 ? ` + ${plan.targets.length - 1} more` : '';
+  tEl.innerHTML = `<b>${plan.totalTerms}</b> term${plan.totalTerms === 1 ? '' : 's'} to <b>${labelHead}</b>${extra}`;
   summary.appendChild(tEl);
   if (plan.bottleneckOf.size > 0) {
     const b = document.createElement('span'); b.className = 'chip warn'; b.innerHTML = `<b>${plan.bottleneckOf.size}</b> offering bottleneck${plan.bottleneckOf.size === 1 ? '' : 's'}`;
@@ -770,12 +827,12 @@ function renderSummary(plan) {
 }
 
 function renderPlan() {
-  if (!state.target) {
-    content.innerHTML = `<div class="info-state">Pick a target course in the sidebar, then click <b>Run analysis</b>.</div>`;
+  if (!state.targets || state.targets.length === 0) {
+    content.innerHTML = `<div class="info-state">Pick at least one target course in the sidebar, then click <b>Run analysis</b>.</div>`;
     summary.innerHTML = '';
     return;
   }
-  const plan = planPathTo(state.target);
+  const plan = planPathTo(state.targets);
   if (plan.error) {
     content.innerHTML = `<div class="error-state"><b>Cannot plan a path</b>${plan.error}</div>`;
     summary.innerHTML = '';
@@ -839,16 +896,25 @@ function renderPlan() {
       empty.textContent = '(nothing scheduled)';
       card.appendChild(empty);
     } else {
+      const targetSet = new Set(plan.targets || []);
       for (const code of t.courses) {
         const c = state.byCode.get(code);
         const row = document.createElement('div'); row.className = 'course-row';
-        if (plan.critSet.has(code)) row.classList.add('crit');
-        if (plan.bottleneckOf.has(code)) row.classList.add('bottleneck');
+        const isTarget = targetSet.has(code);
+        const isCrit   = plan.critSet.has(code);
+        const isBottle = plan.bottleneckOf.has(code);
+        // Priority: CRIT > TARGET > WAIT for background; tag uses same priority.
+        if (isCrit) row.classList.add('crit');
+        else if (isTarget) row.classList.add('target');
+        if (isBottle) row.classList.add('bottleneck');
         row.innerHTML = `<span class="course-code">${code}</span><span class="course-title">${c?.title || ''}</span>`;
-        if (plan.critSet.has(code)) {
+        if (isCrit) {
           const tag = document.createElement('span'); tag.className = 'course-tag crit'; tag.textContent = 'CRIT';
           row.appendChild(tag);
-        } else if (plan.bottleneckOf.has(code)) {
+        } else if (isTarget) {
+          const tag = document.createElement('span'); tag.className = 'course-tag target'; tag.textContent = 'TARGET';
+          row.appendChild(tag);
+        } else if (isBottle) {
           const tag = document.createElement('span'); tag.className = 'course-tag bottleneck'; tag.textContent = 'WAIT';
           row.appendChild(tag);
         }
@@ -952,11 +1018,13 @@ function renderAll() {
 // =========================================================================
 // Wire up
 // =========================================================================
-function populateTargetSelect() {
-  targetSelect.innerHTML = '';
-  // Group by prefix
+function populateTargetAddOptions() {
+  // Build optgroup'd dropdown of every course not already a target.
+  targetAddSel.innerHTML = '<option value="">+ Add a target…</option>';
   const groups = new Map();
+  const taken = new Set(state.targets);
   for (const c of state.courses) {
+    if (taken.has(c.code)) continue;
     if (!groups.has(c.prefix)) groups.set(c.prefix, []);
     groups.get(c.prefix).push(c);
   }
@@ -969,21 +1037,42 @@ function populateTargetSelect() {
       opt.textContent = `${c.code} — ${c.title || ''}`.slice(0, 80);
       og.appendChild(opt);
     }
-    targetSelect.appendChild(og);
+    targetAddSel.appendChild(og);
   }
-  if (state.target && state.byCode.has(state.target)) {
-    targetSelect.value = state.target;
+}
+function renderTargets() {
+  targetChipsEl.innerHTML = '';
+  // De-dupe + drop unknown codes.
+  state.targets = [...new Set(state.targets)].filter(c => state.byCode.has(c));
+  if (state.targets.length === 0) {
+    const hint = document.createElement('span');
+    hint.style.fontSize = '12px';
+    hint.style.color = 'var(--muted)';
+    hint.textContent = '(none — add one below)';
+    targetChipsEl.appendChild(hint);
   } else {
-    // Default to CSC 481 if it exists, else a 400-level CSC course, else first.
-    const defaults = ['CSC 481', 'CSC 402', 'CSC 416', 'CSC 400'];
-    for (const d of defaults) {
-      if (state.byCode.has(d)) { state.target = d; targetSelect.value = d; break; }
-    }
-    if (!state.target && state.courses.length) {
-      state.target = state.courses[0].code;
-      targetSelect.value = state.target;
+    for (const code of state.targets) {
+      const chip = document.createElement('span'); chip.className = 'target-chip';
+      chip.appendChild(document.createTextNode(code));
+      const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.title = `Remove ${code}`;
+      x.onclick = () => {
+        state.targets = state.targets.filter(t => t !== code);
+        saveState(); renderTargets(); renderAll();
+      };
+      chip.appendChild(x);
+      targetChipsEl.appendChild(chip);
     }
   }
+  targetCountEl.textContent = state.targets.length ? `· ${state.targets.length} selected` : '';
+  populateTargetAddOptions();
+}
+function pickInitialTargetIfEmpty() {
+  if (state.targets.length) return;
+  const defaults = ['CSC 481', 'CSC 402', 'CSC 416', 'CSC 400'];
+  for (const d of defaults) {
+    if (state.byCode.has(d)) { state.targets = [d]; return; }
+  }
+  if (state.courses.length) state.targets = [state.courses[0].code];
 }
 
 function init() {
@@ -997,7 +1086,27 @@ function init() {
   seasonSelect.onchange = () => { state.startSeason = seasonSelect.value; saveState(); renderAll(); };
   yearInput.onchange    = () => { state.startYear = parseInt(yearInput.value || '2026', 10); saveState(); renderAll(); };
   capInput.onchange     = () => { state.capPerTerm = Math.max(1, parseInt(capInput.value || '3', 10)); saveState(); renderAll(); };
-  targetSelect.onchange = () => { state.target = targetSelect.value; saveState(); renderAll(); };
+  targetAddSel.onchange = () => {
+    const code = targetAddSel.value;
+    if (!code) return;
+    if (!state.targets.includes(code)) state.targets.push(code);
+    targetAddSel.value = '';
+    saveState(); renderTargets(); renderAll();
+  };
+  presetSelect.onchange = () => {
+    const key = presetSelect.value;
+    if (!key) return;
+    const preset = TARGET_PRESETS[key];
+    if (!preset) return;
+    // Replace targets with the preset's set, filtered to known codes.
+    state.targets = preset.targets.filter(c => state.byCode.has(c));
+    // Also apply WCU offering defaults if the user hasn't customized yet.
+    if (Object.keys(state.offerings).length === 0) {
+      state.offerings = JSON.parse(JSON.stringify(WCU_OFFERING_PRESET));
+    }
+    presetSelect.value = '';
+    saveState(); renderTargets(); renderAll();
+  };
   runBtn.onclick = () => renderAll();
   completedSearch.oninput = () => { state.completedFilter = completedSearch.value; renderCompletedList(); };
   clearCompletedBtn.onclick = () => { state.completed.clear(); saveState(); renderCompletedList(); if (state.tab === 'plan') renderPlan(); };
@@ -1008,7 +1117,7 @@ function init() {
     seasonSelect.value = state.startSeason;
     yearInput.value = state.startYear;
     capInput.value = state.capPerTerm;
-    if (state.byCode.has(state.target)) targetSelect.value = state.target;
+    renderTargets();
     renderCompletedList();
     renderAll();
   });
@@ -1025,7 +1134,8 @@ function init() {
     const text = await loadCatalogText();
     state.courses = parseCatalog(text);
     state.byCode = new Map(state.courses.map(c => [c.code, c]));
-    populateTargetSelect();
+    pickInitialTargetIfEmpty();
+    renderTargets();
     renderCompletedList();
     renderAll();
   } catch (e) {
