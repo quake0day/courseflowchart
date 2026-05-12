@@ -78,8 +78,10 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .subsection-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; }
 .subsection-label:first-of-type { margin-top: 0; }
 .view-tabs { display: grid; gap: 6px; background: var(--panel-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--line); margin-bottom: 8px; }
-.view-tabs.two { grid-template-columns: 1fr 1fr; }
+.view-tabs.two   { grid-template-columns: 1fr 1fr; }
 .view-tabs.three { grid-template-columns: 1fr 1fr 1fr; }
+.view-tabs.four  { grid-template-columns: 1fr 1fr; }
+.view-tabs.four .view-tab { font-size: 12px; }
 .view-tab { text-align: center; font-size: 12px; font-weight: 500; padding: 7px 6px; border-radius: 7px; color: var(--text-soft); text-decoration: none; transition: background .15s, color .15s; line-height: 1.2; }
 .view-tab:hover { color: var(--text); }
 .view-tab.active { background: var(--panel); color: var(--accent); box-shadow: 0 1px 2px rgba(15,23,42,0.05); font-weight: 600; }
@@ -395,10 +397,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
       <div class="sidebar-section" id="view-tabs">
         <p class="section-label">Program</p>
         <p class="subsection-label">Undergraduate</p>
-        <div class="view-tabs three">
+        <div class="view-tabs four">
           <a class="view-tab" href="#/" data-view="bs">BS</a>
           <a class="view-tab" href="#/minor/cs" data-view="minor-cs">CS Minor</a>
           <a class="view-tab" href="#/minor/it" data-view="minor-it">IT Minor</a>
+          <a class="view-tab" href="#/nonmajor" data-view="nonmajor">Non-Major</a>
         </div>
         <p class="subsection-label">Graduate</p>
         <div class="view-tabs two">
@@ -653,7 +656,13 @@ CSC 497. Topics in Computer Security. 3 Credits. Topic in computer security anno
 
 CSC 499. Independent Study in Computer Science. 3 Credits. In conjunction with the instructor, the student selects study topics via literature search. Permission of the Department required to add.
 
-CSC 115. Introduction to Computer Programming. 3 Credits. Introductory programming course used as the foundation for the Minor in Information Technology.
+CSC 110. Fundamentals in Computer Science. 3 Credits. Introduction to the fundamentals of computer science. Topics include surveys of the following sub-areas of computer science: artificial intelligence, hardware/operating systems, programming languages/software, ethics/social issues, history, electronic communications, problem solving, and programming. The course includes laboratory projects (writing computer programs). Gen Ed Attribute: Digital Literacy Pathway, Science Distributive. Distance education offering may be available.
+
+CSC 112. Programming & Data Science. 3 Credits. Introduction to the fundamentals of business computing. Topics include surveys of the following sub-areas of computer science: hardware/operating systems, programming languages/software, ethics/social issues, problem solving, and advanced MS Excel and Scratch programming for business use. The course includes laboratory projects in MS Excel and Scratch. Gen Ed Attribute: Digital Literacy Pathway, Science Distributive.
+
+CSC 115. Introduction to Computer Programming. 3 Credits. The art and science of computing are introduced using an object-oriented programming language, such as Python. Topics include looping, branching, arrays, and program development. Gen Ed Attribute: Science Distributive.
+
+CSC 116. Computational Thinking for Problem Solving. 3 Credits. This course provides an introduction to problem solving and programming using Python. Computational thinking is an approach to solve problems using concepts and ideas from computer science and express solutions in a way that can be run on a computer. Topics covered in this course include (1) four pillars of computational thinking, namely decomposition, pattern recognition, data representation and abstraction, algorithms; (2) fundamental operations of a modern computer; (3) basic algorithms in computer science; and (4) programming using Python. Gen Ed Attribute: Science Distributive.
 
 CST 199. Computer Science-Technology Transfer Credits. 1-9 Credits. Transfer credits for the Minor in Information Technology. Repeatable for credit.
 
@@ -821,8 +830,15 @@ const COURSE_META = {
   'CSC 497': { category: 'topics' },
   'CSC 499': { category: 'independent' },
 
+  // Non-major / Gen-Ed introductory CSC offerings. They appear ONLY in the
+  // /nonmajor view (and CSC 115 also lives in /minor/it). They are not
+  // creditable toward the BS, the CS Minor, or the MS.
+  'CSC 110': { category: 'core', programs: ['nonmajor'] },
+  'CSC 112': { category: 'core', programs: ['nonmajor'] },
+  'CSC 116': { category: 'core', programs: ['nonmajor'] },
+
   // Minor in Information Technology — courses that only appear in /minor/it.
-  'CSC 115': { category: 'core',     programs: ['minor-it'] },
+  'CSC 115': { category: 'core',     programs: ['minor-it', 'nonmajor'] },
   'CST 199': { category: 'topics',   programs: ['minor-it'] },
   'CST 211': { category: 'elective', programs: ['minor-it'] },
   'CST 221': { category: 'core',     programs: ['minor-it'] },
@@ -909,6 +925,19 @@ const VIEWS = {
     subtitle: '18 credits covering programming, security, databases, web tech, and networking.',
     hash: '#/minor/it',
     includeOnly: ['CSC 115', 'CSC 301', 'CST 221', 'CST 235', 'CSW 131', 'CSW 315'],
+  },
+  'nonmajor': {
+    key: 'nonmajor',
+    label: 'Non-Major',
+    title: 'CSC Courses for Non-Majors',
+    subtitle: 'Introductory / Gen Ed CSC offerings for students in other disciplines. These DO NOT count toward the CS major, the CS Minor, or the MS in CS.',
+    hash: '#/nonmajor',
+    includeOnly: ['CSC 110', 'CSC 112', 'CSC 115', 'CSC 116'],
+    rules: [
+      '<b>None of these courses count toward the CS major, the CS Minor, or the MS.</b> They satisfy Gen Ed requirements for students from other disciplines.',
+      'CSC 110, 112, 116 carry the <b>Science Distributive</b> Gen Ed Attribute; CSC 110 and 112 also count for the <b>Digital Literacy Pathway</b>.',
+      'CSC 115 is also part of the <b>Minor in Information Technology</b> (visible in the Minor · IT view).',
+    ],
   },
   'ms': {
     key: 'ms',
@@ -2027,6 +2056,7 @@ function viewFromHash() {
   const h = (location.hash || '').toLowerCase();
   if (h === '#/minor/cs')       return 'minor-cs';
   if (h === '#/minor/it')       return 'minor-it';
+  if (h === '#/nonmajor')       return 'nonmajor';
   if (h === '#/ms')             return 'ms';
   if (h === '#/ms/accelerated') return 'ms-accel';
   return 'bs';
