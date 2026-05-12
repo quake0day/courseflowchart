@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pathway Simulator · CSC</title>
+<style>
+:root {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --panel-soft: #f1f3f8;
+  --line: #e5e8ef;
+  --line-strong: #d4d8e2;
+  --text: #0f172a;
+  --text-soft: #475569;
+  --muted: #94a3b8;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --fall:   #b45309;
+  --fall-soft: #fef3c7;
+  --spring: #047857;
+  --spring-soft: #d1fae5;
+  --both:   #4f46e5;
+  --warn:   #b91c1c;
+  --warn-soft: #fee2e2;
+  --crit:   #7c2d12;
+  --crit-soft: #ffedd5;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+  --shadow-md: 0 4px 14px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
+  --shadow-lg: 0 12px 28px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.05);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; }
+body { display: grid; grid-template-columns: 360px 1fr; min-height: 100vh; }
+
+/* ---- Sidebar ---- */
+aside.sidebar { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+.sidebar-header { padding: 22px 22px 16px; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent); border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.title { font-size: 21px; font-weight: 700; margin: 12px 0 4px 0; letter-spacing: -0.02em; }
+.subtitle { font-size: 12.5px; color: var(--text-soft); margin: 0; line-height: 1.5; }
+.section { padding: 16px 22px; border-bottom: 1px solid var(--line); }
+.section:last-child { border-bottom: 0; }
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+
+.field { display: block; margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: var(--text-soft); margin-bottom: 5px; font-weight: 500; }
+.field select, .field input[type=number] {
+  width: 100%; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 9px;
+  padding: 9px 11px; font-size: 13px; color: var(--text); font-family: inherit; outline: none;
+}
+.field select:focus, .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background: var(--panel); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn { flex: 1; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); padding: 9px 13px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-sm); width: 100%; padding: 11px 14px; font-weight: 600; }
+.btn.primary:hover { background: #4338ca; color: #fff; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-soft); padding: 6px 8px; }
+.btn.ghost:hover { background: var(--panel-soft); color: var(--text); border-color: transparent; }
+
+.search-input {
+  width: 100%; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text);
+  padding: 9px 11px 9px 32px; border-radius: 9px; outline: none; font-size: 13px; font-family: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 10px center; background-size: 13px;
+}
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+
+.checklist { max-height: 280px; overflow-y: auto; margin-top: 8px; padding: 4px 0; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-soft); }
+.checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 12.5px; cursor: pointer; }
+.checklist label:hover { background: rgba(79,70,229,0.06); }
+.checklist input[type=checkbox] { accent-color: var(--accent); }
+.checklist .ck-code { font-weight: 600; min-width: 62px; color: var(--text); }
+.checklist .ck-title { color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.counter { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+
+a.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent); text-decoration: none; }
+a.back-link:hover { text-decoration: underline; }
+
+/* ---- Main ---- */
+main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.topbar { background: var(--panel); border-bottom: 1px solid var(--line); padding: 14px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.tabs { display: inline-flex; background: var(--panel-soft); padding: 3px; border-radius: 9px; border: 1px solid var(--line); }
+.tab { padding: 7px 14px; font-size: 13px; font-weight: 500; color: var(--text-soft); border: 0; background: transparent; border-radius: 7px; cursor: pointer; font-family: inherit; }
+.tab.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow-sm); }
+.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 500; background: var(--panel-soft); border: 1px solid var(--line); color: var(--text-soft); }
+.chip b { color: var(--text); font-weight: 700; }
+.chip.warn { background: var(--warn-soft); border-color: #fecaca; color: var(--warn); }
+.chip.crit { background: var(--crit-soft); border-color: #fed7aa; color: var(--crit); }
+
+.content { flex: 1; overflow: auto; padding: 24px; }
+
+/* ---- Plan view ---- */
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.term-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.term-card.fall { border-top: 4px solid var(--fall); }
+.term-card.spring { border-top: 4px solid var(--spring); }
+.term-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+.term-name { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+.term-name.fall { color: var(--fall); }
+.term-name.spring { color: var(--spring); }
+.term-count { font-size: 11.5px; color: var(--muted); }
+.term-count.over { color: var(--warn); font-weight: 600; }
+.course-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; background: var(--panel-soft); margin-bottom: 5px; font-size: 12.5px; }
+.course-row.crit { background: var(--crit-soft); border: 1px solid #fed7aa; }
+.course-row.bottleneck { background: var(--warn-soft); border: 1px solid #fecaca; }
+.course-code { font-weight: 700; min-width: 64px; }
+.course-title { color: var(--text-soft); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.course-tag { font-size: 10px; padding: 1px 6px; border-radius: 99px; background: #fff; border: 1px solid var(--line-strong); color: var(--muted); white-space: nowrap; }
+.course-tag.crit { background: var(--crit); color: #fff; border-color: var(--crit); }
+.course-tag.bottleneck { background: var(--warn); color: #fff; border-color: var(--warn); }
+
+.empty-state, .info-state {
+  background: var(--panel); border: 1px dashed var(--line-strong); border-radius: 12px;
+  padding: 32px; text-align: center; color: var(--text-soft); font-size: 14px;
+}
+.error-state {
+  background: var(--warn-soft); border: 1px solid #fecaca; border-radius: 12px;
+  padding: 18px 22px; color: var(--warn); font-size: 14px;
+}
+.error-state b { display: block; margin-bottom: 6px; }
+
+/* ---- Offerings table ---- */
+.offerings-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.offerings-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.offerings-toolbar .search-input { max-width: 280px; flex: 1; }
+.offerings-list { max-height: calc(100vh - 220px); overflow-y: auto; }
+.off-row { display: grid; grid-template-columns: 80px 1fr 220px; align-items: center; gap: 12px; padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.off-row:last-child { border-bottom: 0; }
+.off-row:nth-child(even) { background: rgba(241,243,248,0.4); }
+.off-row .off-code { font-weight: 600; }
+.off-row .off-title { color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seg { display: inline-flex; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button { padding: 5px 10px; font-size: 12px; font-weight: 500; border: 0; background: transparent; cursor: pointer; border-radius: 6px; color: var(--text-soft); font-family: inherit; }
+.seg button.active.fall   { background: var(--fall);   color: #fff; }
+.seg button.active.spring { background: var(--spring); color: #fff; }
+.seg button.active.both   { background: var(--both);   color: #fff; }
+
+/* ---- Bottlenecks panel ---- */
+.bn-list { margin-top: 12px; }
+.bn-row {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 8px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+}
+.bn-row .bn-code { font-weight: 700; min-width: 70px; }
+.bn-row .bn-msg { color: var(--text-soft); flex: 1; }
+.bn-row .bn-action { font-size: 12px; }
+
+/* ---- Critical path panel ---- */
+.crit-flow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.crit-flow .crit-pill {
+  background: var(--crit-soft); color: var(--crit); border: 1px solid #fed7aa;
+  padding: 5px 10px; border-radius: 7px; font-size: 12.5px; font-weight: 600;
+}
+.crit-flow .crit-arrow { color: var(--muted); font-size: 13px; }
+
+/* ---- Mobile ---- */
+@media (max-width: 880px) {
+  body { grid-template-columns: 1fr; }
+  aside.sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
+  .content { padding: 16px; }
+  .off-row { grid-template-columns: 70px 1fr; }
+  .off-row .off-title { display: none; }
+  .off-row .seg { grid-column: 1 / -1; justify-self: end; }
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <span class="brand">Pathway Simulator</span>
+    <h1 class="title">Term-by-term planner</h1>
+    <p class="subtitle">Pick a target course, mark what the student has already taken, and see the earliest term they can reach it given each course's offering pattern.</p>
+  </div>
+
+  <div class="section">
+    <p class="section-label">Setup</p>
+    <div class="field">
+      <label for="target">Target course</label>
+      <select id="target"></select>
+    </div>
+    <div class="field-row">
+      <div class="field" style="margin-bottom:0">
+        <label for="startSeason">Start term</label>
+        <select id="startSeason">
+          <option value="Fall">Fall</option>
+          <option value="Spring">Spring</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label for="startYear">Year</label>
+        <input id="startYear" type="number" min="2024" max="2040" />
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label for="capInput">Max CSC courses per term</label>
+      <input id="capInput" type="number" min="1" max="6" />
+    </div>
+    <button class="btn primary" id="runBtn">Run analysis</button>
+  </div>
+
+  <div class="section" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <p class="section-label">Completed courses</p>
+    <input id="completedSearch" class="search-input" placeholder="Search by code or title…" />
+    <div class="checklist" id="completedList"></div>
+    <div class="counter"><span id="completedCount">0</span> completed · <button class="btn ghost" id="clearCompleted" style="font-size:11.5px; padding:2px 6px;">clear all</button></div>
+  </div>
+
+  <div class="section">
+    <a class="back-link" href="/">← Back to flowchart</a>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="plan">Plan</button>
+      <button class="tab" data-tab="offerings">Offerings</button>
+    </div>
+    <div class="summary" id="summary"></div>
+  </div>
+  <div class="content" id="content">
+    <div class="info-state">Loading catalog…</div>
+  </div>
+</main>
+
+<script>
+// =========================================================================
+// Parser — kept in sync with the parser in index.html (~30 lines)
+// =========================================================================
+function parseCatalog(text) {
+  const courses = [];
+  const headerRe = /([A-Z]{2,4})\s+(\d{3})\.\s+([^.]+?)\.\s+([\d\-]+)\s+Credits?\./g;
+  const heads = [];
+  let m;
+  while ((m = headerRe.exec(text)) !== null) {
+    heads.push({ idx: m.index, end: m.index + m[0].length, prefix: m[1], num: m[2], title: m[3].trim(), credits: m[4] });
+  }
+  for (let i = 0; i < heads.length; i++) {
+    const h = heads[i];
+    const bodyEnd = i + 1 < heads.length ? heads[i+1].idx : text.length;
+    const body = text.slice(h.end, bodyEnd).trim();
+    const code = `${h.prefix} ${h.num}`;
+    const prereqRe = /(Pre\s*\/\s*Co\s*requisites?|Prerequisites?|Prerequisite|Co\s*-?\s*requisites?)\s*:/i;
+    const pm = body.match(prereqRe);
+    let prereqs = [];
+    if (pm) {
+      const tail = body.slice(pm.index + pm[0].length);
+      const codeRe = /([A-Z]{2,4})\s*(\d{3})/g;
+      let cm;
+      while ((cm = codeRe.exec(tail)) !== null) {
+        const pcode = `${cm[1]} ${cm[2]}`;
+        if (pcode !== code) prereqs.push(pcode);
+      }
+      prereqs = [...new Set(prereqs)];
+    }
+    courses.push({ code, prefix: h.prefix, num: parseInt(h.num, 10), title: h.title, credits: h.credits, prereqs });
+  }
+  return courses;
+}
+
+async function loadCatalogText() {
+  let text = '';
+  try {
+    const r = await fetch('/api/catalog', { cache: 'no-store' });
+    if (r.ok) text = await r.text();
+  } catch (_) {}
+  if (!text || text.length < 200) {
+    // Extract the embedded fallback from the main page.
+    const r2 = await fetch('/index.html');
+    const html = await r2.text();
+    const m = html.match(/const DEFAULT_CATALOG = `([\s\S]*?)`;/);
+    if (m) text = m[1];
+  }
+  return text;
+}
+
+// =========================================================================
+// State
+// =========================================================================
+const LS_KEY = 'simulator.state.v1';
+const state = {
+  courses: [],
+  byCode: new Map(),
+  // settings
+  target: null,
+  startSeason: 'Fall',
+  startYear: new Date().getFullYear() + 1,
+  capPerTerm: 3,
+  // student
+  completed: new Set(),
+  // offerings: { code: { fall: bool, spring: bool } }   default both true
+  offerings: {},
+  // ui
+  tab: 'plan',
+  completedFilter: '',
+  offeringsFilter: '',
+};
+
+function saveState() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      target: state.target,
+      startSeason: state.startSeason,
+      startYear: state.startYear,
+      capPerTerm: state.capPerTerm,
+      completed: [...state.completed],
+      offerings: state.offerings,
+    }));
+  } catch (_) {}
+}
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const o = JSON.parse(raw);
+    if (o.target) state.target = o.target;
+    if (o.startSeason) state.startSeason = o.startSeason;
+    if (typeof o.startYear === 'number') state.startYear = o.startYear;
+    if (typeof o.capPerTerm === 'number') state.capPerTerm = o.capPerTerm;
+    if (Array.isArray(o.completed)) state.completed = new Set(o.completed);
+    if (o.offerings && typeof o.offerings === 'object') state.offerings = o.offerings;
+  } catch (_) {}
+}
+
+function getOffering(code) {
+  return state.offerings[code] || { fall: true, spring: true };
+}
+
+// =========================================================================
+// Core algorithm — layered DAG longest path with offering & cap constraints
+// =========================================================================
+function planPathTo(targetCode) {
+  if (!targetCode || !state.byCode.has(targetCode)) {
+    return { error: 'Pick a target course.' };
+  }
+  if (state.completed.has(targetCode)) {
+    return { error: `${targetCode} is already marked as completed.` };
+  }
+
+  // Build prereq + dependents maps restricted to known codes.
+  const prereqMap = new Map();
+  const dependents = new Map();
+  for (const c of state.courses) {
+    const ps = (c.prereqs || []).filter(p => state.byCode.has(p));
+    prereqMap.set(c.code, ps);
+    for (const p of ps) {
+      if (!dependents.has(p)) dependents.set(p, []);
+      dependents.get(p).push(c.code);
+    }
+  }
+
+  // Reverse-BFS from target → needed set (excluding completed).
+  const needed = new Set();
+  const q = [targetCode];
+  while (q.length) {
+    const c = q.shift();
+    if (needed.has(c) || state.completed.has(c)) continue;
+    needed.add(c);
+    for (const p of prereqMap.get(c) || []) {
+      if (!state.completed.has(p)) q.push(p);
+    }
+  }
+  if (needed.size === 0) {
+    return { error: 'No coursework required — student is ready.' };
+  }
+
+  // Topological sort over needed.
+  const inDeg = new Map();
+  for (const c of needed) inDeg.set(c, 0);
+  for (const c of needed) {
+    for (const p of prereqMap.get(c) || []) {
+      if (needed.has(p)) inDeg.set(c, inDeg.get(c) + 1);
+    }
+  }
+  const sorted = [];
+  const ready = [...inDeg].filter(([, d]) => d === 0).map(([c]) => c);
+  while (ready.length) {
+    const c = ready.shift();
+    sorted.push(c);
+    for (const dep of dependents.get(c) || []) {
+      if (!needed.has(dep)) continue;
+      inDeg.set(dep, inDeg.get(dep) - 1);
+      if (inDeg.get(dep) === 0) ready.push(dep);
+    }
+  }
+  if (sorted.length !== needed.size) {
+    return { error: 'Prerequisite graph has a cycle — cannot plan.' };
+  }
+
+  // Term helpers.
+  const flipSeason = (s) => s === 'Fall' ? 'Spring' : 'Fall';
+  const seasonAt  = (t) => t % 2 === 0 ? state.startSeason : flipSeason(state.startSeason);
+  function nextValidTerm(code, minT) {
+    const off = getOffering(code);
+    if (off.fall && off.spring) return minT;
+    let t = Math.max(0, minT);
+    for (let i = 0; i < 60; i++) {
+      const s = seasonAt(t);
+      if ((s === 'Fall' && off.fall) || (s === 'Spring' && off.spring)) return t;
+      t++;
+    }
+    return Infinity;
+  }
+
+  // Phase 1: earliest term ignoring cap, but obeying offerings.
+  const scheduled = new Map();
+  const naturalMin = new Map();   // earliest term *without* offering constraint
+  for (const c of sorted) {
+    let minT = 0;
+    for (const p of prereqMap.get(c) || []) {
+      if (state.completed.has(p)) continue;
+      minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
+    }
+    naturalMin.set(c, minT);
+    scheduled.set(c, nextValidTerm(c, minT));
+  }
+
+  // Bottleneck flag: offering constraint forced a wait
+  const bottleneckOf = new Map();
+  for (const c of sorted) {
+    const delta = scheduled.get(c) - naturalMin.get(c);
+    if (delta > 0) bottleneckOf.set(c, delta);
+  }
+
+  // Phase 2: enforce per-term cap. Strategy: walk terms ascending, if any
+  // term has >cap, defer overflow courses (lowest criticality first) to the
+  // next valid offering term ≥ t+1, then re-propagate.
+  const targetT = scheduled.get(targetCode);
+  function criticalityScore(c) {
+    // Larger = more critical (deferring delays target more). Simple proxy:
+    // depth-to-target measured in topo distance.
+    let best = -1;
+    const seen = new Set();
+    const dq = [[c, 0]];
+    while (dq.length) {
+      const [x, d] = dq.shift();
+      if (seen.has(x)) continue;
+      seen.add(x);
+      if (x === targetCode) { best = Math.max(best, d); continue; }
+      for (const dep of dependents.get(x) || []) {
+        if (needed.has(dep)) dq.push([dep, d + 1]);
+      }
+    }
+    return best;
+  }
+  const crit = new Map();
+  for (const c of needed) crit.set(c, criticalityScore(c));
+
+  let safety = 200;
+  while (safety-- > 0) {
+    const buckets = new Map();
+    for (const [c, t] of scheduled) {
+      if (!buckets.has(t)) buckets.set(t, []);
+      buckets.get(t).push(c);
+    }
+    const overTerms = [...buckets.keys()].sort((a, b) => a - b).filter(t => buckets.get(t).length > state.capPerTerm);
+    if (overTerms.length === 0) break;
+    const t = overTerms[0];
+    const arr = buckets.get(t).slice();
+    // Sort by criticality DESC (keep most-critical first); defer the rest.
+    arr.sort((a, b) => (crit.get(b) ?? -1) - (crit.get(a) ?? -1) || a.localeCompare(b));
+    const toDefer = arr.slice(state.capPerTerm);
+    let moved = false;
+    for (const c of toDefer) {
+      const newT = nextValidTerm(c, t + 1);
+      if (newT > scheduled.get(c)) {
+        scheduled.set(c, newT);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+    // Re-propagate downstream of moved courses.
+    for (const c of sorted) {
+      let minT = 0;
+      for (const p of prereqMap.get(c) || []) {
+        if (state.completed.has(p)) continue;
+        minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
+      }
+      const nm = naturalMin.get(c);
+      const newNat = Math.max(nm, minT);
+      naturalMin.set(c, newNat);
+      const newT = nextValidTerm(c, newNat);
+      if (newT > scheduled.get(c)) scheduled.set(c, newT);
+    }
+  }
+
+  // Re-derive bottlenecks (offering forced wait, possibly amplified by cap).
+  bottleneckOf.clear();
+  for (const c of sorted) {
+    const off = getOffering(c);
+    if (off.fall && off.spring) continue;
+    // The natural min relative to *prereq* placement
+    let minT = 0;
+    for (const p of prereqMap.get(c) || []) {
+      if (state.completed.has(p)) continue;
+      minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
+    }
+    const delta = scheduled.get(c) - minT;
+    if (delta > 0) bottleneckOf.set(c, delta);
+  }
+
+  // Critical path: walk back from target, each step pick prereq with latest scheduledT.
+  const critPath = [];
+  let cur = targetCode;
+  const guard = new Set();
+  while (cur && !guard.has(cur)) {
+    critPath.unshift(cur);
+    guard.add(cur);
+    const ps = (prereqMap.get(cur) || []).filter(p => needed.has(p));
+    if (ps.length === 0) break;
+    ps.sort((a, b) => (scheduled.get(b) ?? -1) - (scheduled.get(a) ?? -1));
+    cur = ps[0];
+  }
+  const critSet = new Set(critPath);
+
+  // Group into terms.
+  const totalTerms = scheduled.get(targetCode) + 1;
+  const terms = [];
+  for (let t = 0; t < totalTerms; t++) {
+    const list = [];
+    for (const [c, st] of scheduled) {
+      if (st === t) list.push(c);
+    }
+    list.sort();
+    const yrOff = state.startSeason === 'Fall' ? Math.ceil(t / 2) : Math.floor(t / 2);
+    terms.push({ index: t, season: seasonAt(t), year: state.startYear + yrOff, courses: list });
+  }
+
+  return { error: null, terms, critPath, critSet, bottleneckOf, scheduled, totalTerms };
+}
+
+// =========================================================================
+// UI
+// =========================================================================
+const targetSelect = document.getElementById('target');
+const seasonSelect = document.getElementById('startSeason');
+const yearInput = document.getElementById('startYear');
+const capInput = document.getElementById('capInput');
+const runBtn = document.getElementById('runBtn');
+const completedList = document.getElementById('completedList');
+const completedSearch = document.getElementById('completedSearch');
+const completedCount = document.getElementById('completedCount');
+const clearCompletedBtn = document.getElementById('clearCompleted');
+const summary = document.getElementById('summary');
+const content = document.getElementById('content');
+const tabs = [...document.querySelectorAll('.tab')];
+
+function fmtTermLabel(t) {
+  return `${t.season} ${t.year}`;
+}
+
+function renderSummary(plan) {
+  summary.innerHTML = '';
+  if (!plan || plan.error) return;
+  const tEl = document.createElement('span'); tEl.className = 'chip'; tEl.innerHTML = `<b>${plan.totalTerms}</b> term${plan.totalTerms === 1 ? '' : 's'} to <b>${state.target}</b>`;
+  summary.appendChild(tEl);
+  if (plan.bottleneckOf.size > 0) {
+    const b = document.createElement('span'); b.className = 'chip warn'; b.innerHTML = `<b>${plan.bottleneckOf.size}</b> offering bottleneck${plan.bottleneckOf.size === 1 ? '' : 's'}`;
+    summary.appendChild(b);
+  }
+  const cEl = document.createElement('span'); cEl.className = 'chip crit'; cEl.innerHTML = `Critical path · <b>${plan.critPath.length}</b> course${plan.critPath.length === 1 ? '' : 's'}`;
+  summary.appendChild(cEl);
+}
+
+function renderPlan() {
+  if (!state.target) {
+    content.innerHTML = `<div class="info-state">Pick a target course in the sidebar, then click <b>Run analysis</b>.</div>`;
+    summary.innerHTML = '';
+    return;
+  }
+  const plan = planPathTo(state.target);
+  if (plan.error) {
+    content.innerHTML = `<div class="error-state"><b>Cannot plan a path</b>${plan.error}</div>`;
+    summary.innerHTML = '';
+    return;
+  }
+  renderSummary(plan);
+
+  const wrap = document.createElement('div');
+
+  // Critical path panel
+  const critWrap = document.createElement('div');
+  critWrap.style.marginBottom = '18px';
+  critWrap.innerHTML = `<p class="section-label" style="margin:0 0 4px;">Critical path</p>`;
+  const flow = document.createElement('div'); flow.className = 'crit-flow';
+  plan.critPath.forEach((c, i) => {
+    if (i > 0) {
+      const a = document.createElement('span'); a.className = 'crit-arrow'; a.textContent = '→';
+      flow.appendChild(a);
+    }
+    const pill = document.createElement('span'); pill.className = 'crit-pill'; pill.textContent = c;
+    flow.appendChild(pill);
+  });
+  critWrap.appendChild(flow);
+  wrap.appendChild(critWrap);
+
+  // Bottlenecks panel
+  if (plan.bottleneckOf.size > 0) {
+    const bn = document.createElement('div'); bn.style.marginBottom = '18px';
+    bn.innerHTML = `<p class="section-label" style="margin:0 0 4px;">Offering bottlenecks</p>`;
+    const list = document.createElement('div'); list.className = 'bn-list';
+    const items = [...plan.bottleneckOf.entries()].sort((a, b) => b[1] - a[1]);
+    for (const [code, delta] of items) {
+      const c = state.byCode.get(code);
+      const off = getOffering(code);
+      const offStr = off.fall && off.spring ? 'Both' : off.fall ? 'Fall only' : 'Spring only';
+      const row = document.createElement('div'); row.className = 'bn-row';
+      row.innerHTML = `<span class="bn-code">${code}</span><span class="bn-msg"><b>${c?.title || ''}</b> — offered <b>${offStr}</b>; waits ${delta} extra term${delta === 1 ? '' : 's'}.</span>`;
+      const btn = document.createElement('button'); btn.className = 'btn'; btn.style.padding = '4px 9px'; btn.style.fontSize = '12px';
+      btn.textContent = 'Try Both';
+      btn.onclick = () => { state.offerings[code] = { fall: true, spring: true }; saveState(); renderAll(); };
+      row.appendChild(btn);
+      list.appendChild(row);
+    }
+    bn.appendChild(list);
+    wrap.appendChild(bn);
+  }
+
+  // Term-by-term grid
+  const gridLabel = document.createElement('p'); gridLabel.className = 'section-label'; gridLabel.style.margin = '0 0 8px';
+  gridLabel.textContent = 'Term plan';
+  wrap.appendChild(gridLabel);
+
+  const grid = document.createElement('div'); grid.className = 'plan-grid';
+  for (const t of plan.terms) {
+    const card = document.createElement('div');
+    card.className = `term-card ${t.season === 'Fall' ? 'fall' : 'spring'}`;
+    const over = t.courses.length > state.capPerTerm;
+    card.innerHTML = `<div class="term-header"><span class="term-name ${t.season === 'Fall' ? 'fall' : 'spring'}">${fmtTermLabel(t)}</span><span class="term-count ${over ? 'over' : ''}">${t.courses.length} course${t.courses.length === 1 ? '' : 's'}${over ? ` · over cap` : ''}</span></div>`;
+    if (t.courses.length === 0) {
+      const empty = document.createElement('div'); empty.style.fontSize = '12px'; empty.style.color = 'var(--muted)';
+      empty.textContent = '(nothing scheduled)';
+      card.appendChild(empty);
+    } else {
+      for (const code of t.courses) {
+        const c = state.byCode.get(code);
+        const row = document.createElement('div'); row.className = 'course-row';
+        if (plan.critSet.has(code)) row.classList.add('crit');
+        if (plan.bottleneckOf.has(code)) row.classList.add('bottleneck');
+        row.innerHTML = `<span class="course-code">${code}</span><span class="course-title">${c?.title || ''}</span>`;
+        if (plan.critSet.has(code)) {
+          const tag = document.createElement('span'); tag.className = 'course-tag crit'; tag.textContent = 'CRIT';
+          row.appendChild(tag);
+        } else if (plan.bottleneckOf.has(code)) {
+          const tag = document.createElement('span'); tag.className = 'course-tag bottleneck'; tag.textContent = 'WAIT';
+          row.appendChild(tag);
+        }
+        card.appendChild(row);
+      }
+    }
+    grid.appendChild(card);
+  }
+  wrap.appendChild(grid);
+
+  content.innerHTML = '';
+  content.appendChild(wrap);
+}
+
+function renderOfferings() {
+  summary.innerHTML = '';
+  const wrap = document.createElement('div'); wrap.className = 'offerings-wrap';
+  const tools = document.createElement('div'); tools.className = 'offerings-toolbar';
+  const search = document.createElement('input'); search.className = 'search-input'; search.placeholder = 'Search by code or title…'; search.value = state.offeringsFilter;
+  search.oninput = () => { state.offeringsFilter = search.value; rebuild(); };
+  const reset = document.createElement('button'); reset.className = 'btn'; reset.textContent = 'Reset all to Both';
+  reset.onclick = () => { state.offerings = {}; saveState(); rebuild(); };
+  const count = document.createElement('span'); count.style.fontSize = '12px'; count.style.color = 'var(--muted)'; count.style.marginLeft = 'auto';
+  tools.appendChild(search); tools.appendChild(reset); tools.appendChild(count);
+
+  const list = document.createElement('div'); list.className = 'offerings-list';
+  function rebuild() {
+    list.innerHTML = '';
+    const q = state.offeringsFilter.trim().toLowerCase();
+    const shown = state.courses.filter(c => {
+      if (!q) return true;
+      return c.code.toLowerCase().includes(q) || (c.title || '').toLowerCase().includes(q);
+    });
+    let nonDefault = 0;
+    for (const c of state.courses) {
+      const off = getOffering(c.code);
+      if (!(off.fall && off.spring)) nonDefault++;
+    }
+    count.textContent = `${state.courses.length} courses · ${nonDefault} customized`;
+    for (const c of shown) {
+      const off = getOffering(c.code);
+      const row = document.createElement('div'); row.className = 'off-row';
+      const seg = document.createElement('div'); seg.className = 'seg';
+      const bF = mkSegBtn('Fall',   'fall',   off.fall && !off.spring);
+      const bB = mkSegBtn('Both',   'both',   off.fall && off.spring);
+      const bS = mkSegBtn('Spring', 'spring', !off.fall && off.spring);
+      bF.onclick = () => { state.offerings[c.code] = { fall: true,  spring: false }; saveState(); rebuild(); };
+      bB.onclick = () => { state.offerings[c.code] = { fall: true,  spring: true  }; saveState(); rebuild(); };
+      bS.onclick = () => { state.offerings[c.code] = { fall: false, spring: true  }; saveState(); rebuild(); };
+      seg.appendChild(bF); seg.appendChild(bB); seg.appendChild(bS);
+      row.innerHTML = `<span class="off-code">${c.code}</span><span class="off-title">${c.title || ''}</span>`;
+      row.appendChild(seg);
+      list.appendChild(row);
+    }
+  }
+  function mkSegBtn(label, cls, active) {
+    const b = document.createElement('button');
+    b.className = active ? `active ${cls}` : '';
+    b.textContent = label;
+    return b;
+  }
+  rebuild();
+  wrap.appendChild(tools); wrap.appendChild(list);
+  content.innerHTML = '';
+  content.appendChild(wrap);
+}
+
+function renderCompletedList() {
+  completedList.innerHTML = '';
+  const q = state.completedFilter.trim().toLowerCase();
+  const shown = state.courses.filter(c => {
+    if (!q) return true;
+    return c.code.toLowerCase().includes(q) || (c.title || '').toLowerCase().includes(q);
+  });
+  for (const c of shown) {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox';
+    cb.checked = state.completed.has(c.code);
+    cb.onchange = () => {
+      if (cb.checked) state.completed.add(c.code); else state.completed.delete(c.code);
+      saveState();
+      completedCount.textContent = state.completed.size;
+      if (state.tab === 'plan') renderPlan();
+    };
+    const code = document.createElement('span'); code.className = 'ck-code'; code.textContent = c.code;
+    const title = document.createElement('span'); title.className = 'ck-title'; title.textContent = c.title || '';
+    lbl.appendChild(cb); lbl.appendChild(code); lbl.appendChild(title);
+    completedList.appendChild(lbl);
+  }
+  completedCount.textContent = state.completed.size;
+}
+
+function renderAll() {
+  if (state.tab === 'plan') renderPlan();
+  else renderOfferings();
+}
+
+// =========================================================================
+// Wire up
+// =========================================================================
+function populateTargetSelect() {
+  targetSelect.innerHTML = '';
+  // Group by prefix
+  const groups = new Map();
+  for (const c of state.courses) {
+    if (!groups.has(c.prefix)) groups.set(c.prefix, []);
+    groups.get(c.prefix).push(c);
+  }
+  for (const [prefix, list] of [...groups].sort()) {
+    const og = document.createElement('optgroup'); og.label = prefix;
+    list.sort((a, b) => a.num - b.num);
+    for (const c of list) {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = `${c.code} — ${c.title || ''}`.slice(0, 80);
+      og.appendChild(opt);
+    }
+    targetSelect.appendChild(og);
+  }
+  if (state.target && state.byCode.has(state.target)) {
+    targetSelect.value = state.target;
+  } else {
+    // Default to CSC 481 if it exists, else a 400-level CSC course, else first.
+    const defaults = ['CSC 481', 'CSC 402', 'CSC 416', 'CSC 400'];
+    for (const d of defaults) {
+      if (state.byCode.has(d)) { state.target = d; targetSelect.value = d; break; }
+    }
+    if (!state.target && state.courses.length) {
+      state.target = state.courses[0].code;
+      targetSelect.value = state.target;
+    }
+  }
+}
+
+function init() {
+  restoreState();
+  // Settings inputs
+  seasonSelect.value = state.startSeason;
+  yearInput.value = state.startYear;
+  capInput.value = state.capPerTerm;
+  seasonSelect.onchange = () => { state.startSeason = seasonSelect.value; saveState(); renderAll(); };
+  yearInput.onchange    = () => { state.startYear = parseInt(yearInput.value || '2026', 10); saveState(); renderAll(); };
+  capInput.onchange     = () => { state.capPerTerm = Math.max(1, parseInt(capInput.value || '3', 10)); saveState(); renderAll(); };
+  targetSelect.onchange = () => { state.target = targetSelect.value; saveState(); renderAll(); };
+  runBtn.onclick = () => renderAll();
+  completedSearch.oninput = () => { state.completedFilter = completedSearch.value; renderCompletedList(); };
+  clearCompletedBtn.onclick = () => { state.completed.clear(); saveState(); renderCompletedList(); if (state.tab === 'plan') renderPlan(); };
+  tabs.forEach(t => t.onclick = () => {
+    tabs.forEach(x => x.classList.toggle('active', x === t));
+    state.tab = t.dataset.tab;
+    renderAll();
+  });
+}
+
+(async function main() {
+  init();
+  try {
+    const text = await loadCatalogText();
+    state.courses = parseCatalog(text);
+    state.byCode = new Map(state.courses.map(c => [c.code, c]));
+    populateTargetSelect();
+    renderCompletedList();
+    renderAll();
+  } catch (e) {
+    content.innerHTML = `<div class="error-state"><b>Failed to load catalog</b>${e.message || e}</div>`;
+  }
+})();
+</script>
+</body>
+</html>
