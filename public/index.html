@@ -418,6 +418,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
           <a class="view-tab" href="#/ms" data-view="ms">MS</a>
           <a class="view-tab" href="#/ms/accelerated" data-view="ms-accel">Accelerated</a>
         </div>
+
+        <p class="subsection-label">Graduate Certificates</p>
+        <div class="view-tabs four">
+          <a class="view-tab" href="#/cert/prog-fund" data-view="cert-prog-fund">Prog Fund</a>
+          <a class="view-tab" href="#/cert/comp-sec"  data-view="cert-comp-sec">Comp Sec</a>
+          <a class="view-tab" href="#/cert/info-sys" data-view="cert-info-sys">Info Sys</a>
+          <a class="view-tab" href="#/cert/web"      data-view="cert-web">Web Tech</a>
+        </div>
       </div>
 
       <div class="sidebar-section">
@@ -989,6 +997,64 @@ const VIEWS = {
       '<b>Up to 4 MS electives</b> may substitute for their BS equivalents — excluding the combinations linked by a <span style="color:#dc2626">red dashed line</span>. For each such pair, only one course counts toward the degree.',
       'All MS stipulations also apply once you enter the MS portion (core-first rule, ≤2 seminars, etc.).',
       'A grade of <b>C-</b> or better is required in BS courses; CSC 402 fulfills the BS capstone.',
+    ],
+  },
+  // ---- Graduate certificates ------------------------------------------
+  'cert-prog-fund': {
+    key: 'cert-prog-fund',
+    label: 'Prog Fund',
+    title: 'Post-Baccalaureate Certificate in Programming Fundamentals',
+    subtitle: '9 credits, 100% online — preparation for graduate study by students entering CS without a CS bachelor\'s degree.',
+    hash: '#/cert/prog-fund',
+    includeOnly: ['CSC 512', 'CSC 513', 'CSC 516'],
+    rules: [
+      'All three courses are <b>required</b> (no electives).',
+      'Online format; typically completed in 6 to 9 months.',
+      'These three courses <b>do NOT count</b> toward the MS in Computer Science.',
+    ],
+  },
+  'cert-comp-sec': {
+    key: 'cert-comp-sec',
+    label: 'Comp Sec',
+    title: 'Graduate Certificate in Computer Security (Information Assurance)',
+    subtitle: '12 credits — select any 4 from the listed pool.',
+    hash: '#/cert/comp-sec',
+    includeOnly: ['CSC 525', 'CSC 535', 'CSC 555', 'CSC 583', 'CSC 586', 'CSC 603', 'CRJ 555'],
+    rules: [
+      'Select <b>any 4</b> of the 7 listed courses (3 cr each, 12 cr total).',
+      'These four courses <b>do</b> count toward the MS in Computer Science.',
+    ],
+  },
+  'cert-info-sys': {
+    key: 'cert-info-sys',
+    label: 'Info Sys',
+    title: 'Graduate Certificate in Information Systems',
+    subtitle: '12 credits — pick 3 or 4 from the required pool; if only 3, add 1 from the elective pool.',
+    hash: '#/cert/info-sys',
+    includeOnly: [
+      // Required pool (pick 3 or 4):
+      'STA 511', 'CSC 545', 'CSC 555', 'CSC 586',
+      // Elective pool (only used if 3 were picked from above):
+      'CSC 520', 'CSC 525', 'CSC 530', 'CSC 535', 'CSC 540', 'CSC 560',
+      'CSC 565', 'CSC 575', 'CSC 581', 'CSC 583', 'CSC 584', 'CSC 585',
+      'CSC 600', 'CSC 603',
+    ],
+    rules: [
+      'Pick <b>3 or 4</b> from the required pool: <b>STA 511, CSC 545, CSC 555, CSC 586</b>.',
+      'If only 3 were chosen (9 cr), add <b>1 more</b> from the wider elective pool (CSC 520 / 525 / 530 / 535 / 540 / 560 / 565 / 575 / 581 / 583 / 584 / 585 / 600 / 603).',
+      'Total: 12 credits.',
+    ],
+  },
+  'cert-web': {
+    key: 'cert-web',
+    label: 'Web Tech',
+    title: 'Graduate Certificate in Web Technology',
+    subtitle: '12 credits — select any 4 from the 5-course list.',
+    hash: '#/cert/web',
+    includeOnly: ['CSC 515', 'CSC 535', 'CSC 545', 'CSC 584', 'CSC 585'],
+    rules: [
+      'Select <b>any 4</b> of the 5 listed courses (3 cr each, 12 cr total).',
+      'These four courses <b>do</b> count toward the MS in Computer Science.',
     ],
   },
 };
@@ -2095,11 +2161,15 @@ async function reloadCatalog() {
 // ---------- Program view routing ----------
 function viewFromHash() {
   const h = (location.hash || '').toLowerCase();
-  if (h === '#/minor/cs')       return 'minor-cs';
-  if (h === '#/minor/it')       return 'minor-it';
-  if (h === '#/nonmajor')       return 'nonmajor';
-  if (h === '#/ms')             return 'ms';
-  if (h === '#/ms/accelerated') return 'ms-accel';
+  if (h === '#/minor/cs')        return 'minor-cs';
+  if (h === '#/minor/it')        return 'minor-it';
+  if (h === '#/nonmajor')        return 'nonmajor';
+  if (h === '#/ms')              return 'ms';
+  if (h === '#/ms/accelerated')  return 'ms-accel';
+  if (h === '#/cert/prog-fund')  return 'cert-prog-fund';
+  if (h === '#/cert/comp-sec')   return 'cert-comp-sec';
+  if (h === '#/cert/info-sys')   return 'cert-info-sys';
+  if (h === '#/cert/web')        return 'cert-web';
   return 'bs';
 }
 function applyView(v, { animate = true } = {}) {
