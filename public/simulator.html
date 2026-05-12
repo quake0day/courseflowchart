@@ -88,6 +88,10 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .chip b { color: var(--text); font-weight: 700; }
 .chip.warn { background: var(--warn-soft); border-color: #fecaca; color: var(--warn); }
 .chip.crit { background: var(--crit-soft); border-color: #fed7aa; color: var(--crit); }
+.share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line-strong); font-size: 12.5px; font-weight: 500; cursor: pointer; color: var(--text); font-family: inherit; }
+.share-btn:hover { border-color: var(--accent); color: var(--accent); }
+.share-btn.copied { background: #ecfdf5; border-color: #6ee7b7; color: #047857; }
+.share-btn svg { width: 13px; height: 13px; }
 
 .content { flex: 1; overflow: auto; padding: 24px; }
 
@@ -221,6 +225,10 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
       <button class="tab" data-tab="offerings">Offerings</button>
     </div>
     <div class="summary" id="summary"></div>
+    <button class="share-btn" id="shareBtn" title="Copy a link that reproduces this exact simulation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
+      Copy link
+    </button>
   </div>
   <div class="content" id="content">
     <div class="info-state">Loading catalog…</div>
@@ -311,6 +319,7 @@ function saveState() {
       offerings: state.offerings,
     }));
   } catch (_) {}
+  if (typeof syncHash === 'function') syncHash();
 }
 function restoreState() {
   try {
@@ -406,17 +415,90 @@ function planPathTo(targetCode) {
     return Infinity;
   }
 
+  // Some courses have non-code prereqs (e.g. CSC 301 needs "any three CSC,
+  // CST, or CSW courses"). Encode them as soft constraints applied on top
+  // of the formal prereq graph.
+  const SPECIAL_PREREQS = {
+    'CSC 301': { minPriorCSC: 3 },  // any three CSC/CST/CSW courses
+    'CSC 381': { minTermIdx: 4 },   // Junior standing ≈ 60+ credits ≈ year 3
+    'CSC 382': { minTermIdx: 4 },   // Junior standing
+  };
+  function priorCSCCountTerm(forCode, k) {
+    // Return the term *after* the kth CSC/CST/CSW course finishes. Counts
+    // completed-before-start courses as term −1.
+    const terms = [];
+    for (const code of state.completed) {
+      if (/^(CSC|CST|CSW)/.test(code)) terms.push(-1);
+    }
+    for (const [code, t] of scheduled) {
+      if (code === forCode) continue;
+      if (/^(CSC|CST|CSW)/.test(code)) terms.push(t);
+    }
+    terms.sort((a, b) => a - b);
+    if (terms.length < k) return null;  // can't satisfy from current plan
+    return terms[k - 1] + 1;
+  }
+
   // Phase 1: earliest term ignoring cap, but obeying offerings.
   const scheduled = new Map();
   const naturalMin = new Map();   // earliest term *without* offering constraint
+  function specialMinFor(c) {
+    const spec = SPECIAL_PREREQS[c];
+    if (!spec) return 0;
+    let m = 0;
+    if (spec.minTermIdx) m = Math.max(m, spec.minTermIdx);
+    if (spec.minPriorCSC) {
+      const k = priorCSCCountTerm(c, spec.minPriorCSC);
+      if (k != null) m = Math.max(m, k);
+    }
+    return m;
+  }
   for (const c of sorted) {
     let minT = 0;
     for (const p of prereqMap.get(c) || []) {
       if (state.completed.has(p)) continue;
       minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
     }
+    minT = Math.max(minT, specialMinFor(c));
     naturalMin.set(c, minT);
     scheduled.set(c, nextValidTerm(c, minT));
+  }
+  // Special-prereq fixup: courses like CSC 301 (needs 3 prior CSC courses)
+  // have no formal prereq edges, so the topo pass scheduled them at term 0
+  // before the count constraint could see other courses. Re-evaluate them
+  // now that every course is on the calendar, then re-propagate dependents.
+  for (let pass = 0; pass < 5; pass++) {
+    let changed = false;
+    for (const c of sorted) {
+      if (!SPECIAL_PREREQS[c]) continue;
+      let minT = 0;
+      for (const p of prereqMap.get(c) || []) {
+        if (state.completed.has(p)) continue;
+        minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
+      }
+      minT = Math.max(minT, specialMinFor(c));
+      const newT = nextValidTerm(c, minT);
+      if (newT > (scheduled.get(c) ?? 0)) {
+        scheduled.set(c, newT);
+        naturalMin.set(c, Math.max(naturalMin.get(c) ?? 0, minT));
+        changed = true;
+      }
+    }
+    if (!changed) break;
+    // Re-propagate to dependents in topo order.
+    for (const c of sorted) {
+      let minT = 0;
+      for (const p of prereqMap.get(c) || []) {
+        if (state.completed.has(p)) continue;
+        minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
+      }
+      minT = Math.max(minT, specialMinFor(c));
+      const newT = nextValidTerm(c, minT);
+      if (newT > scheduled.get(c)) {
+        scheduled.set(c, newT);
+        naturalMin.set(c, Math.max(naturalMin.get(c) ?? 0, minT));
+      }
+    }
   }
 
   // Bottleneck flag: offering constraint forced a wait
@@ -480,6 +562,7 @@ function planPathTo(targetCode) {
         if (state.completed.has(p)) continue;
         minT = Math.max(minT, (scheduled.get(p) ?? 0) + 1);
       }
+      minT = Math.max(minT, specialMinFor(c));
       const nm = naturalMin.get(c);
       const newNat = Math.max(nm, minT);
       naturalMin.set(c, newNat);
@@ -584,6 +667,90 @@ const clearCompletedBtn = document.getElementById('clearCompleted');
 const summary = document.getElementById('summary');
 const content = document.getElementById('content');
 const tabs = [...document.querySelectorAll('.tab')];
+
+// =========================================================================
+// Shareable URL — encode the full plan setup into window.location.hash so
+// any team member opening that link sees the exact same simulation.
+// Format:
+//   #t=<TARGET>&s=F|S&y=<YEAR>&c=<CAP>&d=<COMPLETED|JOIN>&o=<OFF|JOIN>
+// where each offering override is "CODE:F" (Fall only) or "CODE:S" (Spring
+// only). "Both" is the default and not encoded. Course codes drop the
+// inner space ("CSC 481" → "CSC481") for URL friendliness.
+// =========================================================================
+function shortCode(code) { return code.replace(/\s+/g, ''); }
+function expandCode(s) {
+  const m = s.match(/^([A-Z]{2,4})(\d{3})$/);
+  return m ? `${m[1]} ${m[2]}` : s;
+}
+function encodeStateToHash() {
+  const params = [];
+  if (state.target) params.push(`t=${encodeURIComponent(shortCode(state.target))}`);
+  params.push(`s=${state.startSeason === 'Spring' ? 'S' : 'F'}`);
+  params.push(`y=${state.startYear}`);
+  params.push(`c=${state.capPerTerm}`);
+  const done = [...state.completed].sort().map(shortCode);
+  if (done.length) params.push(`d=${done.join('|')}`);
+  const offEntries = [];
+  for (const [code, off] of Object.entries(state.offerings)) {
+    if (off.fall && off.spring) continue;
+    if (off.fall && !off.spring) offEntries.push(`${shortCode(code)}:F`);
+    else if (!off.fall && off.spring) offEntries.push(`${shortCode(code)}:S`);
+  }
+  if (offEntries.length) params.push(`o=${offEntries.sort().join('|')}`);
+  return '#' + params.join('&');
+}
+function applyHashToState() {
+  const raw = window.location.hash.replace(/^#/, '');
+  if (!raw) return false;
+  const params = new Map();
+  for (const pair of raw.split('&')) {
+    const i = pair.indexOf('=');
+    if (i < 0) continue;
+    params.set(pair.slice(0, i), decodeURIComponent(pair.slice(i + 1)));
+  }
+  if (params.has('t')) state.target = expandCode(params.get('t'));
+  if (params.has('s')) state.startSeason = params.get('s') === 'S' ? 'Spring' : 'Fall';
+  if (params.has('y')) state.startYear = parseInt(params.get('y'), 10) || state.startYear;
+  if (params.has('c')) state.capPerTerm = Math.max(1, parseInt(params.get('c'), 10) || 3);
+  if (params.has('d')) {
+    state.completed = new Set(params.get('d').split('|').map(s => expandCode(s)).filter(Boolean));
+  }
+  if (params.has('o')) {
+    state.offerings = {};
+    for (const tok of params.get('o').split('|')) {
+      const m = tok.match(/^([A-Z]{2,4}\d{3}):(F|S)$/);
+      if (!m) continue;
+      const code = expandCode(m[1]);
+      state.offerings[code] = m[2] === 'F'
+        ? { fall: true,  spring: false }
+        : { fall: false, spring: true  };
+    }
+  }
+  return true;
+}
+let _hashWriteTimer = null;
+function syncHash() {
+  // Debounce — avoid flooding history while the user is typing.
+  if (_hashWriteTimer) clearTimeout(_hashWriteTimer);
+  _hashWriteTimer = setTimeout(() => {
+    const next = encodeStateToHash();
+    if (window.location.hash !== next) {
+      history.replaceState(null, '', next);
+    }
+  }, 120);
+}
+async function copyShareLink(btn) {
+  const url = `${location.origin}${location.pathname}${encodeStateToHash()}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    const original = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1400);
+  } catch (_) {
+    prompt('Copy this link:', url);
+  }
+}
 
 function fmtTermLabel(t) {
   return `${t.season} ${t.year}`;
@@ -821,6 +988,8 @@ function populateTargetSelect() {
 
 function init() {
   restoreState();
+  // URL hash overrides localStorage so shared links reproduce exactly.
+  applyHashToState();
   // Settings inputs
   seasonSelect.value = state.startSeason;
   yearInput.value = state.startYear;
@@ -832,6 +1001,17 @@ function init() {
   runBtn.onclick = () => renderAll();
   completedSearch.oninput = () => { state.completedFilter = completedSearch.value; renderCompletedList(); };
   clearCompletedBtn.onclick = () => { state.completed.clear(); saveState(); renderCompletedList(); if (state.tab === 'plan') renderPlan(); };
+  document.getElementById('shareBtn').onclick = (e) => copyShareLink(e.currentTarget);
+  // Reload state if user navigates with browser back/forward to a different hash.
+  window.addEventListener('hashchange', () => {
+    applyHashToState();
+    seasonSelect.value = state.startSeason;
+    yearInput.value = state.startYear;
+    capInput.value = state.capPerTerm;
+    if (state.byCode.has(state.target)) targetSelect.value = state.target;
+    renderCompletedList();
+    renderAll();
+  });
   tabs.forEach(t => t.onclick = () => {
     tabs.forEach(x => x.classList.toggle('active', x === t));
     state.tab = t.dataset.tab;
