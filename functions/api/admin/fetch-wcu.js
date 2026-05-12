@@ -53,19 +53,33 @@ async function fetchText(url) {
 
 function parseCatalog(html) {
   const courses = [];
-  // Each course is wrapped in <div class="courseblock"> ... </div>.
-  const blocks = matchAll(html, /<div\s+class="courseblock"[^>]*>([\s\S]*?)<\/div>\s*(?=<div\s+class="courseblock"|<\/div>|$)/g);
+  // Each course is wrapped in <div class="courseblock"> ... </div>. Its
+  // children are <p> elements only — no nested divs — so a non-greedy
+  // match between courseblock and the first </div> is safe.
+  const blocks = matchAll(html, /<div\s+class="courseblock">([\s\S]*?)<\/div>/g);
   for (const m of blocks) {
     const block = m[1];
-    const title = textOf(firstMatch(block, /<p\s+class="courseblocktitle"[^>]*>([\s\S]*?)<\/p>/));
+    const title = textOf(firstMatch(block, /<p\s+class="[^"]*\bcourseblocktitle\b[^"]*"[^>]*>([\s\S]*?)<\/p>/));
     if (!title) continue;
     const header = parseHeader(title);
     if (!header) continue;
-    const desc = textOf(firstMatch(block, /<p\s+class="courseblockdesc"[^>]*>([\s\S]*?)<\/p>/)) || "";
-    const extras = matchAll(block, /<p\s+class="(?:courseblockextra|noindent)"[^>]*>([\s\S]*?)<\/p>/g)
-      .map(x => textOf(x[1]))
+    // WCU uses compound class names ("noindent courseblockdesc",
+    // "noindent courseblock__prereq", etc.) — match by word boundary.
+    const desc   = textOf(firstMatch(block, /<p\s+class="[^"]*\bcourseblockdesc\b[^"]*"[^>]*>([\s\S]*?)<\/p>/)) || "";
+    const prereq = textOf(firstMatch(block, /<p\s+class="[^"]*\bcourseblock__prereq\b[^"]*"[^>]*>([\s\S]*?)<\/p>/)) || "";
+    // Other annotation paragraphs (Gen Ed Attribute, Distance education, Repeatable…)
+    // use bare class="noindent". Skip the desc/prereq paragraphs we already grabbed.
+    const extras = matchAll(block, /<p\s+class="([^"]*)"[^>]*>([\s\S]*?)<\/p>/g)
+      .filter(x => {
+        const cls = x[1];
+        if (!/\bnoindent\b/.test(cls)) return false;
+        if (/\bcourseblockdesc\b/.test(cls)) return false;
+        if (/\bcourseblock__prereq\b/.test(cls)) return false;
+        return true;
+      })
+      .map(x => textOf(x[2]))
       .filter(Boolean);
-    courses.push({ ...header, desc, extras });
+    courses.push({ ...header, desc, prereq, extras });
   }
   return { courses };
 }
@@ -81,10 +95,11 @@ function parseHeader(rawTitle) {
 }
 
 function formatCourse(c) {
-  const lines = [];
-  lines.push(`${c.prefix} ${c.num}. ${c.title}. ${c.credits} Credits. ${c.desc}`.trim());
-  for (const e of c.extras) lines.push(e);
-  return lines.join(" ");
+  let out = `${c.prefix} ${c.num}. ${c.title}. ${c.credits} Credits.`;
+  if (c.desc)   out += " " + c.desc;
+  if (c.prereq) out += " " + c.prereq;
+  for (const e of c.extras) out += " " + e;
+  return out;
 }
 
 // --- tiny HTML helpers ----------------------------------------------------

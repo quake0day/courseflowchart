@@ -124,6 +124,29 @@ button { font-family: inherit; }
 <div id="root"></div>
 <div id="toast" class="toast"></div>
 
+<!-- History modal -->
+<div id="history-modal" class="hist-modal" hidden>
+  <div class="hist-card">
+    <button id="hist-close" class="btn" style="position:absolute;top:14px;right:14px;padding:4px 10px;font-size:12px">✕</button>
+    <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;letter-spacing:-.01em">Catalog history</h2>
+    <p style="margin:0 0 14px;color:var(--text-soft);font-size:13px">Each Save snapshots the previous version. Up to 20 are kept.</p>
+    <div id="hist-list"></div>
+  </div>
+</div>
+
+<style>
+.hist-modal { position: fixed; inset: 0; background: rgba(15,23,42,.45); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 60; }
+.hist-modal[hidden] { display: none; }
+.hist-card { position: relative; width: 560px; max-width: 95vw; max-height: 80vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px 26px; box-shadow: var(--shadow-lg); }
+.hist-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; margin-top: 8px; font-size: 13px; }
+.hist-row:first-child { margin-top: 0; }
+.hist-row.current { background: var(--ok-soft); border-color: rgba(5,150,105,.35); }
+.hist-row-meta { display: flex; flex-direction: column; gap: 2px; }
+.hist-row .t { font-weight: 600; color: var(--text); }
+.hist-row .sub { color: var(--muted); font-size: 11.5px; }
+.hist-row .actions { display: flex; gap: 6px; }
+</style>
+
 <script>
 const $ = (sel, root = document) => root.querySelector(sel);
 const root = $("#root");
@@ -262,6 +285,7 @@ function viewWorkspace() {
           <div class="cat-toolbar">
             <button id="btn-fetch-wcu" class="btn">⤓ Fetch from WCU</button>
             <button id="btn-revert" class="btn">Revert</button>
+            <button id="btn-history" class="btn">⏱ History</button>
             <button id="btn-save" class="btn primary" disabled>Save</button>
             <span class="cat-stats" id="cat-stats">
               <span><b id="cs-courses">0</b> courses</span>
@@ -351,6 +375,19 @@ function wireWorkspace() {
 
   $("#btn-save").onclick = async () => {
     if (state.busy.save) return;
+    // Pre-save safety check — warn if the new text loses a lot of courses
+    // or edges compared to what's currently saved. Catches the "fetch
+    // accidentally wiped prereqs" failure mode.
+    const before = parseCatalog(state.catalog.saved);
+    const after = parseCatalog(state.catalog.current);
+    const dropC = before.courses - after.courses;
+    const dropE = before.edges - after.edges;
+    const bigDrop = (before.courses > 0 && dropC / before.courses > 0.25)
+                 || (before.edges   > 0 && dropE / before.edges   > 0.25);
+    if (bigDrop) {
+      const msg = `Heads up — the new text has ${after.courses} courses / ${after.edges} edges, was ${before.courses} / ${before.edges}.\n\nThat's a big drop (more than 25%). Continue saving?`;
+      if (!confirm(msg)) return;
+    }
     state.busy.save = true;
     setStatus("busy", "Saving…");
     try {
@@ -371,6 +408,8 @@ function wireWorkspace() {
       refreshSummary();
     }
   };
+
+  $("#btn-history").onclick = openHistory;
 
   $("#btn-fetch-wcu").onclick = async () => {
     if (state.busy.fetchWcu) return;
@@ -592,6 +631,115 @@ async function sendChat() {
   } finally {
     state.busy.chat = false;
     renderChat();
+  }
+}
+
+// ---------- History modal ----------
+async function openHistory() {
+  const modal = $("#history-modal");
+  const list = $("#hist-list");
+  modal.hidden = false;
+  list.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:12px 0">Loading…</div>`;
+  try {
+    const r = await fetch("/api/admin/history", { credentials: "include" });
+    if (!r.ok) throw new Error(`${r.status}`);
+    const j = await r.json();
+    renderHistory(j);
+  } catch (err) {
+    list.innerHTML = `<div style="color:var(--err)">Failed: ${escapeHtml(err.message)}</div>`;
+  }
+}
+function closeHistory() { $("#history-modal").hidden = true; }
+document.addEventListener("click", (e) => {
+  if (e.target?.id === "history-modal") closeHistory();
+  if (e.target?.id === "hist-close") closeHistory();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#history-modal")?.hidden) closeHistory();
+});
+
+function renderHistory({ current, versions }) {
+  const list = $("#hist-list");
+  const parts = [];
+  if (current) {
+    parts.push(`
+      <div class="hist-row current">
+        <div class="hist-row-meta">
+          <span class="t">Current</span>
+          <span class="sub">${escapeHtml(current.updatedAt || "")}${current.updatedBy ? " · by " + escapeHtml(current.updatedBy) : ""} · ${current.bytes ?? "?"} bytes</span>
+        </div>
+        <div class="actions"><span style="color:var(--muted);font-size:12px">live</span></div>
+      </div>
+    `);
+  }
+  if (!versions || versions.length === 0) {
+    parts.push(`<div style="margin-top:8px;color:var(--muted);font-size:13px">No previous versions yet. They'll appear here after your next Save.</div>`);
+  } else {
+    versions.forEach(v => {
+      parts.push(`
+        <div class="hist-row">
+          <div class="hist-row-meta">
+            <span class="t">${escapeHtml(v.savedAt)}</span>
+            <span class="sub">${v.bytes ?? "?"} bytes${v.replacedBy ? " · replaced by " + escapeHtml(v.replacedBy) : ""}</span>
+          </div>
+          <div class="actions">
+            <button class="btn" data-restore="${escapeHtml(v.key)}">Restore</button>
+          </div>
+        </div>
+      `);
+    });
+  }
+  // Embedded default as the ultimate safety net.
+  parts.push(`
+    <div class="hist-row">
+      <div class="hist-row-meta">
+        <span class="t">Embedded default</span>
+        <span class="sub">Falls back to the catalog baked into public/index.html — always available.</span>
+      </div>
+      <div class="actions">
+        <button class="btn" data-restore-default="1">Restore</button>
+      </div>
+    </div>
+  `);
+  list.innerHTML = parts.join("");
+  list.querySelectorAll("[data-restore]").forEach(b => b.onclick = () => restoreVersion(b.dataset.restore));
+  list.querySelectorAll("[data-restore-default]").forEach(b => b.onclick = () => restoreDefault());
+}
+
+async function restoreVersion(key) {
+  if (!confirm(`Restore ${key}? Your current catalog will be snapshotted first so this is reversible.`)) return;
+  try {
+    const r = await fetch("/api/admin/restore", {
+      method: "POST", credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    if (!r.ok) throw new Error((await r.text()) || `${r.status}`);
+    await loadCatalog();
+    const ta = $("#cat"); if (ta) ta.value = state.catalog.current;
+    refreshSummary();
+    closeHistory();
+    toast(`Restored from ${key}`, "ok");
+  } catch (err) {
+    toast(`Restore failed: ${err.message}`, "err");
+  }
+}
+async function restoreDefault() {
+  if (!confirm("Restore the embedded default catalog? Your current text will be snapshotted to history first so this is reversible.")) return;
+  try {
+    const r = await fetch("/api/admin/restore", {
+      method: "POST", credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ useEmbeddedDefault: true }),
+    });
+    if (!r.ok) throw new Error((await r.text()) || `${r.status}`);
+    await loadCatalog();
+    const ta = $("#cat"); if (ta) ta.value = state.catalog.current;
+    refreshSummary();
+    closeHistory();
+    toast("Restored to embedded default", "ok");
+  } catch (err) {
+    toast(`Restore failed: ${err.message}`, "err");
   }
 }
 
