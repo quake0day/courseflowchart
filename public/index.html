@@ -773,6 +773,14 @@ CSC 610. Independent Research. 3 Credits. The student may work in one of three d
 
 CSC 620. Thesis. 3 Credits. Contact department for more information about this course.
 
+MAT 131. Precalculus. 3 Credits. Topics include polynomial, rational, exponential, logarithmic, and trigonometric functions. An emphasis is placed on understanding function properties and graphs. Successful completion of this course prepares students for MAT 161. MAT 131 Prerequisite: Successful completion of MAT Q30, with a minimum grade of C-, or an appropriate score on the Mathematics Placement Examination.
+
+MAT 151. Introduction to Discrete Mathematics. 3 Credits. Set theory, Boolean logic, elementary combinatorics, proofs, simple graph theory, and simple probability. MAT 151 Prerequisite: Successful completion of MAT Q30, with a minimum grade of C-, or an appropriate score on the Mathematics Placement Examination.
+
+MAT 161. Calculus I. 4 Credits. Differential and integral calculus of real-valued functions of a single real variable with applications. MAT 161 Prerequisite: Successful completion of MAT 131, with minimum grade of C, or an appropriate score on the Mathematics Placement Examination.
+
+MAT 162. Calculus II. 4 Credits. Continuation of MAT 161 including the study of series, methods of integration, transcendental functions, and applications to the sciences. MAT 162 Prerequisite: Successful completion of MAT 161, with a minimum grade of C.
+
 STA 511. Introduction to Statistical Computing and Data Management. 3 Credits. Graduate statistics course used in the Information Systems certificate.
 
 CRJ 555. Criminal Justice Topics in Computer Crime. 3 Credits. Used in the graduate Computer Security (Information Assurance) certificate.`;
@@ -917,6 +925,14 @@ const COURSE_META = {
   'CSC 605': { category: 'elective',   programs: ['ms', 'ms-accel'] },
   'CSC 610': { category: 'independent',programs: ['ms', 'ms-accel'] },
   'CSC 620': { category: 'capstone',   programs: ['ms'] },
+
+  // Math courses required by the BS in CS. They sit upstream of CSC 220,
+  // CSC 231, CSC 241, and CSC 400, so the simulator needs them as nodes
+  // to time the math sequence (MAT 131 → MAT 161; MAT 151 separately).
+  'MAT 131': { category: 'external', programs: ['bs', 'minor-cs'] },
+  'MAT 151': { category: 'external', programs: ['bs', 'minor-cs'] },
+  'MAT 161': { category: 'external', programs: ['bs', 'minor-cs'] },
+  'MAT 162': { category: 'external', programs: ['bs', 'minor-cs'] },
 
   // Non-CSC graduate courses referenced by certificate programs.
   'STA 511': { category: 'elective', programs: ['ms'] },
