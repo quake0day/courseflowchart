@@ -1,0 +1,2079 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CSC Course Flowchart</title>
+<style>
+:root {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --panel-soft: #f1f3f8;
+  --line: #e5e8ef;
+  --line-strong: #d4d8e2;
+  --text: #0f172a;
+  --text-soft: #475569;
+  --muted: #94a3b8;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --c-100: #0284c7;
+  --c-200: #059669;
+  --c-300: #7c3aed;
+  --c-400: #db2777;
+  --c-ext: #64748b;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+  --shadow-md: 0 4px 14px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
+  --shadow-lg: 0 12px 28px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.05);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+.app { display: grid; grid-template-columns: 340px 1fr 0px; height: 100vh; transition: grid-template-columns .25s ease; }
+.app.right-open { grid-template-columns: 340px 1fr 420px; }
+.app.left-collapsed { grid-template-columns: 0px 1fr 0px; }
+.app.left-collapsed.right-open { grid-template-columns: 0px 1fr 420px; }
+
+/* Sidebar */
+.sidebar { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.sidebar-inner { display: flex; flex-direction: column; min-height: 100%; min-width: 340px; }
+.sidebar-header { padding: 22px 22px 18px 22px; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent); border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.title { font-size: 22px; font-weight: 700; margin: 12px 0 4px 0; letter-spacing: -0.02em; color: var(--text); }
+.subtitle { font-size: 13px; color: var(--text-soft); margin: 0; }
+
+.sidebar-section { padding: 16px 22px; }
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 10px 0; font-weight: 600; }
+
+.sidebar textarea { width: 100%; height: 100%; min-height: 140px; resize: none; flex: 1; background: var(--panel-soft); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.55; outline: none; transition: border-color .15s, box-shadow .15s; }
+.sidebar textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background: var(--panel); }
+
+.btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn { flex: 1; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+.btn.primary:hover { background: #4338ca; color: #fff; box-shadow: var(--shadow-md); }
+
+.search { width: 100%; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); padding: 10px 14px 10px 36px; border-radius: 10px; outline: none; font-size: 13px; font-family: inherit; transition: border-color .15s, box-shadow .15s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; background-size: 14px; }
+.search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
+
+.programs-hint { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; }
+.legend-pill.cert.active { color: #fff; }
+.legend-pill.cert { font-weight: 500; }
+
+.footer-note { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0; padding-top: 16px; border-top: 1px solid var(--line); }
+.muted-link { color: var(--accent); text-decoration: none; font-weight: 500; }
+.muted-link:hover { text-decoration: underline; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.legend-pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 99px; font-size: 12px; color: var(--text-soft); cursor: pointer; user-select: none; transition: all .15s; font-weight: 500; }
+.legend-pill:hover { border-color: var(--accent); }
+.legend-pill.off { opacity: 0.4; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.rules-list { margin: 0; padding-left: 18px; font-size: 12px; color: var(--text-soft); line-height: 1.55; }
+.rules-list li { margin: 0; }
+.rules-list li + li { margin-top: 6px; }
+.rules-list b { color: var(--text); font-weight: 600; }
+
+.subsection-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 10px 0 6px; }
+.subsection-label:first-of-type { margin-top: 0; }
+.view-tabs { display: grid; gap: 6px; background: var(--panel-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--line); margin-bottom: 8px; }
+.view-tabs.two { grid-template-columns: 1fr 1fr; }
+.view-tabs.three { grid-template-columns: 1fr 1fr 1fr; }
+.view-tab { text-align: center; font-size: 12px; font-weight: 500; padding: 7px 6px; border-radius: 7px; color: var(--text-soft); text-decoration: none; transition: background .15s, color .15s; line-height: 1.2; }
+.view-tab:hover { color: var(--text); }
+.view-tab.active { background: var(--panel); color: var(--accent); box-shadow: 0 1px 2px rgba(15,23,42,0.05); font-weight: 600; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.stat { background: var(--panel-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.stat-value { font-size: 22px; font-weight: 700; margin-top: 2px; letter-spacing: -0.02em; color: var(--text); }
+
+/* Canvas */
+.canvas-wrap { position: relative; background: var(--bg); background-image: radial-gradient(circle, rgba(148,163,184,0.18) 1px, transparent 1px); background-size: 22px 22px; overflow: hidden; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; display: block; }
+.canvas:active { cursor: grabbing; }
+.hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: 11.5px; pointer-events: none; letter-spacing: 0.01em; background: rgba(255,255,255,0.85); padding: 6px 14px; border-radius: 99px; border: 1px solid var(--line); backdrop-filter: blur(8px); }
+.toolbar { position: absolute; top: 14px; right: 14px; display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 5px; z-index: 5; box-shadow: var(--shadow-md); }
+.toolbar button { background: transparent; border: none; color: var(--text-soft); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+.toolbar button:hover { background: var(--panel-soft); color: var(--accent); }
+
+.left-toggle { position: absolute; top: 14px; left: 14px; z-index: 5; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; color: var(--text-soft); font-size: 12px; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all .15s; }
+.left-toggle:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+/* Details */
+.details { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; min-width: 0; }
+.details-inner { min-width: 420px; }
+.details-header { padding: 26px 28px 18px 28px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); z-index: 1; }
+.details-code { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: var(--text); }
+.details-title { font-size: 15px; color: var(--text-soft); margin-top: 6px; line-height: 1.45; }
+.details-badges { margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; border: 1px solid; }
+.details-body { padding: 20px 28px 36px; font-size: 14px; line-height: 1.7; color: var(--text); }
+.details-section { margin-top: 22px; }
+.details-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 10px 0; font-weight: 600; }
+.prereq-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.prereq-chip { padding: 6px 11px; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; font-size: 12.5px; cursor: pointer; transition: all .15s; font-weight: 500; color: var(--text); }
+.prereq-chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.prereq-chip.empty { color: var(--muted); border-style: dashed; cursor: default; background: transparent; }
+.prereq-chip.alt { color: var(--text-soft); background: #fff; border-style: dashed; cursor: default; }
+.details-accel-body { font-size: 13px; color: var(--text-soft); line-height: 1.55; display: flex; flex-direction: column; gap: 8px; }
+.details-accel-warn { padding: 8px 12px; background: rgba(220,38,38,0.06); border-left: 3px solid #dc2626; border-radius: 6px; color: #b91c1c; font-size: 12.5px; }
+
+.details-prereq-note {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--panel-soft);
+  border-left: 3px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.details-alts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.details-alts-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); padding: 0 6px; }
+.prereq-chip.empty:hover { background: transparent; border-color: var(--line); color: var(--muted); }
+.close-btn { position: absolute; top: 22px; right: 22px; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 6px 10px; border-radius: 6px; line-height: 1; }
+.close-btn:hover { background: var(--panel-soft); color: var(--text); }
+
+/* SVG */
+.node { cursor: pointer; transition: opacity .25s; }
+.node.dim { opacity: 0.18; }
+.node .node-card { transition: stroke-width .15s, filter .15s; filter: drop-shadow(0 2px 4px rgba(15,23,42,0.08)); }
+.node.related .node-card { stroke-width: 2 !important; }
+/* Focus state: a single, slightly stronger soft shadow — never the second
+   offset rectangle. */
+.node.focus .node-card { stroke-width: 2.5 !important; filter: drop-shadow(0 4px 12px rgba(15,23,42,0.18)); }
+.node text { pointer-events: none; user-select: none; }
+/* Exclusion-partner overlay shown when its mate is focused */
+.node .excl-cross { fill: none; stroke: #dc2626; stroke-width: 3.5; stroke-linecap: round; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.node.excluded-by-focus .excl-cross { opacity: 0.9; }
+.node.excluded-by-focus .node-card { fill: #fef2f2 !important; stroke: #dc2626 !important; stroke-width: 2.4 !important; filter: drop-shadow(0 2px 8px rgba(220,38,38,0.22)); }
+.node.excluded-by-focus .node-code,
+.node.excluded-by-focus .node-title { fill: #b91c1c !important; }
+
+.link-group { transition: opacity .25s; }
+.link-group.dim { opacity: 0.08; }
+.link-group .link { fill: none; stroke-width: 1.5; opacity: 0.5; transition: stroke-width .2s, opacity .2s, stroke .2s; stroke: #94a3b8; }
+.link-group.highlight .link { opacity: 1; stroke-width: 2.2; stroke: #4f46e5; marker-end: url(#arrow-active); }
+.link-group .link-flow { fill: none; stroke-width: 2; opacity: 0; stroke-dasharray: 5 9; }
+.link-group.highlight .link-flow { opacity: 1; animation: flow 1s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -42; } }
+
+.col { pointer-events: none; }
+.col-band { transition: opacity .2s; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.22); }
+
+.toolbar-sep { display: inline-block; width: 1px; height: 22px; background: var(--line); margin: 0 2px; align-self: center; }
+
+/* Legend — two display modes share the same DOM:
+   • .legend-modal (default) — full-screen modal overlay
+   • .legend-modal.pinned    — small, draggable floating card with no overlay */
+.legend-modal {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: rgba(15,23,42,0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+.legend-modal.show { opacity: 1; pointer-events: auto; }
+.legend-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(15,23,42,0.22), 0 4px 12px rgba(15,23,42,0.08);
+  padding: 26px 30px 28px;
+  width: 480px; max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px); overflow-y: auto;
+  transform: translateY(10px) scale(0.98);
+  opacity: 0.7;
+  transition: transform .25s ease, opacity .25s ease;
+}
+.legend-modal.show .legend-card { transform: translateY(0) scale(1); opacity: 1; }
+
+/* Pinned (large-desktop default) mode */
+.legend-modal.pinned {
+  inset: auto; padding: 0;
+  background: transparent;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  pointer-events: none;     /* let clicks pass through except on the card */
+  z-index: 30;              /* under the toolbar, above the canvas */
+}
+.legend-modal.pinned.show { opacity: 1; }
+.legend-modal.pinned .legend-card {
+  pointer-events: auto;
+  position: fixed;
+  /* default position: bottom-right corner of the canvas area */
+  right: 24px; bottom: 24px; left: auto; top: auto;
+  width: 320px;
+  max-height: 72vh;
+  padding: 18px 20px 18px;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15,23,42,0.16), 0 2px 8px rgba(15,23,42,0.06);
+  transition: right .25s ease, bottom .25s ease, transform .25s ease, opacity .25s ease;
+}
+/* When the right-side details panel is open, slide the pinned legend left
+   so it doesn't sit behind the panel. User-dragged positions (inline
+   `left`/`top`) take precedence over this rule automatically. */
+.app.right-open .legend-modal.pinned .legend-card { right: 444px; }
+.legend-modal.pinned .legend-drag {
+  cursor: grab;
+  margin: -18px -20px 10px;
+  padding: 14px 20px 4px;
+  border-radius: 14px 14px 0 0;
+  user-select: none;
+  touch-action: none;
+  background: linear-gradient(180deg, rgba(241,243,248,0.7), transparent);
+}
+.legend-modal.pinned .legend-drag::before {
+  content: ""; display: block;
+  width: 34px; height: 4px; border-radius: 2px;
+  background: var(--line-strong); opacity: 0.7;
+  margin: 0 auto 8px;
+}
+.legend-modal.pinned .legend-card.dragging { cursor: grabbing; box-shadow: 0 22px 50px rgba(15,23,42,0.22); }
+.legend-modal.pinned .legend-card.dragging .legend-drag { cursor: grabbing; }
+.legend-modal.pinned .legend-h2 { font-size: 15px; margin: 0 0 2px; }
+.legend-modal.pinned .legend-sub { font-size: 11.5px; margin: 0 0 12px; }
+.legend-modal.pinned .legend-h3 { font-size: 9.5px; margin-bottom: 6px; }
+.legend-modal.pinned .legend-items { grid-template-columns: 1fr; gap: 5px 0; font-size: 11.5px; }
+.legend-modal.pinned .legend-items-arrows { gap: 5px 0; }
+.legend-modal.pinned .legend-row + .legend-row { margin-top: 10px; padding-top: 10px; }
+.legend-modal.pinned .legend-tips { font-size: 11.5px; }
+.legend-modal.pinned .close-btn { top: 10px; right: 10px; }
+.legend-modal .close-btn { position: absolute; top: 18px; right: 18px; }
+.legend-h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+.legend-sub { margin: 0 0 18px; color: var(--text-soft); font-size: 13px; line-height: 1.45; }
+.legend-row + .legend-row { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.legend-h3 { margin: 0 0 10px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+.legend-items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 13px; color: var(--text); }
+.legend-items-arrows { grid-template-columns: 1fr; }
+.legend-item { display: flex; align-items: center; gap: 10px; line-height: 1.4; }
+.legend-item .swatch { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(15,23,42,0.06); }
+.legend-item .ex-card { display: inline-block; width: 34px; height: 20px; border-radius: 5px; border: 1.6px solid currentColor; flex-shrink: 0; }
+.legend-item .star-icon { width: 22px; flex-shrink: 0; color: #f59e0b; font-size: 16px; text-align: center; line-height: 1; }
+.legend-item .cert-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: #fff; flex-shrink: 0; box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(15,23,42,0.08); }
+.legend-item svg { flex-shrink: 0; }
+.legend-tips { margin: 0; padding-left: 18px; color: var(--text-soft); font-size: 13px; line-height: 1.6; }
+.legend-tips li + li { margin-top: 2px; }
+
+/* Mobile-only "how to use" hint that floats at the top */
+.mobile-hint {
+  position: fixed; top: 60px; left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  display: none;
+  align-items: center; gap: 10px;
+  background: rgba(15,23,42,0.92);
+  color: #fff;
+  padding: 9px 14px 9px 16px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  z-index: 70;
+  box-shadow: 0 8px 26px rgba(15,23,42,0.28);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .3s ease, transform .3s ease;
+  cursor: pointer;
+}
+.mobile-hint.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.mobile-hint-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  background: rgba(255,255,255,0.16);
+  border-radius: 50%;
+  font-size: 10px; line-height: 1;
+  margin-left: 2px;
+}
+@media (min-width: 769px) { .mobile-hint { display: none !important; } }
+
+/* Backdrop for the mobile drawer */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 45;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+
+.toast { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 10; box-shadow: var(--shadow-lg); }
+
+/* ---------------- Mobile (≤768px) ---------------- */
+@media (max-width: 768px) {
+  .app { display: block !important; position: relative; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .canvas-wrap { position: absolute; inset: 0; z-index: 1; }
+
+  /* Sidebar → left drawer */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 320px; max-width: 86vw;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform .3s cubic-bezier(.4,.0,.2,1);
+    box-shadow: 0 0 40px rgba(15,23,42,0.18);
+  }
+  .sidebar-inner { min-width: 0; width: 100%; }
+  .app:not(.left-collapsed) .sidebar { transform: translateX(0); }
+
+  /* Backdrop is visible only when drawer is open */
+  .app:not(.left-collapsed) .backdrop { opacity: 1; pointer-events: auto; }
+
+  /* Details → bottom sheet */
+  .details, .app.right-open .details {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    width: 100% !important;
+    height: 78vh; height: 78dvh;
+    max-height: 78vh; max-height: 78dvh;
+    z-index: 60;
+    transform: translateY(100%);
+    transition: transform .32s cubic-bezier(.4,.0,.2,1);
+    border-left: none;
+    border-top: 1px solid var(--line);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 40px rgba(15,23,42,0.16);
+  }
+  .app.right-open .details { transform: translateY(0); }
+  .details-inner { min-width: 0; width: 100%; }
+  /* Drag handle */
+  .details::before {
+    content: ""; position: absolute; top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 44px; height: 4px; border-radius: 2px;
+    background: var(--line-strong);
+    z-index: 2;
+  }
+  .details-header { padding-top: 26px; }
+
+  /* Override grid widths in case they leak through */
+  .app, .app.right-open, .app.left-collapsed, .app.left-collapsed.right-open {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hint is too noisy on tiny screens */
+  .hint { display: none; }
+
+  /* Toolbar a bit more compact + still upper-right */
+  .toolbar { top: 12px; right: 12px; padding: 4px; }
+  .toolbar button { width: 38px; height: 38px; }
+
+  /* Left toggle a bit bigger so it's tappable */
+  .left-toggle { padding: 10px 14px; font-size: 13px; }
+
+  /* Legend modal: single-column on small screens */
+  .legend-card { padding: 22px 22px 26px; border-radius: 14px; }
+  .legend-items { grid-template-columns: 1fr; gap: 8px 0; }
+
+  /* Sidebar a tad more breathing room on small screens */
+  .sidebar-header { padding: 26px 22px 18px; }
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-header">
+        <span class="brand">Curriculum Map</span>
+        <h1 class="title" id="view-title">CSC Flowchart</h1>
+        <p class="subtitle" id="view-subtitle">Interactive prerequisite graph for the Computer Science department.</p>
+      </div>
+
+      <div class="sidebar-section" id="view-tabs">
+        <p class="section-label">Program</p>
+        <p class="subsection-label">Undergraduate</p>
+        <div class="view-tabs three">
+          <a class="view-tab" href="#/" data-view="bs">BS</a>
+          <a class="view-tab" href="#/minor/cs" data-view="minor-cs">CS Minor</a>
+          <a class="view-tab" href="#/minor/it" data-view="minor-it">IT Minor</a>
+        </div>
+        <p class="subsection-label">Graduate</p>
+        <div class="view-tabs two">
+          <a class="view-tab" href="#/ms" data-view="ms">MS</a>
+          <a class="view-tab" href="#/ms/accelerated" data-view="ms-accel">Accelerated</a>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="stats">
+          <div class="stat"><div class="stat-label">Courses</div><div class="stat-value" id="stat-courses">0</div></div>
+          <div class="stat"><div class="stat-label">Edges</div><div class="stat-value" id="stat-edges">0</div></div>
+          <div class="stat"><div class="stat-label">Levels</div><div class="stat-value" id="stat-levels">0</div></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" id="rules-section" hidden>
+        <p class="section-label">Program rules</p>
+        <ul class="rules-list" id="rules-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <input class="search" id="search" placeholder="Search course or topic..." />
+      </div>
+
+      <div class="sidebar-section">
+        <p class="section-label">Filter by level</p>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="section-label">Programs</p>
+        <div class="legend" id="programs"></div>
+        <p class="programs-hint" id="programs-hint">Click a certificate to trace its course path.</p>
+      </div>
+
+      <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; min-height: 0;">
+        <p class="footer-note">
+          Catalog managed by the
+          <a class="muted-link" href="https://catalog.wcupa.edu/undergraduate/sciences-mathematics/computer-science/" target="_blank" rel="noopener noreferrer">CSC department ↗</a>.
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <div class="canvas-wrap" id="canvas-wrap">
+    <button class="left-toggle" id="left-toggle">☰ Panel</button>
+    <div class="toolbar">
+      <button id="btn-fit" title="Fit to view">⊡</button>
+      <button id="btn-zoom-in" title="Zoom in">＋</button>
+      <button id="btn-zoom-out" title="Zoom out">−</button>
+      <button id="btn-recenter" title="Re-center">⊙</button>
+      <span class="toolbar-sep" aria-hidden="true"></span>
+      <button id="btn-legend" title="Map key">?</button>
+    </div>
+    <svg class="canvas" id="canvas"></svg>
+    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+    <div class="mobile-hint" id="mobile-hint" role="status">
+      <span class="mobile-hint-text">Tap to trace · Double-tap for details · Drag to pan</span>
+      <span class="mobile-hint-close" aria-hidden="true">✕</span>
+    </div>
+    <div class="legend-modal" id="legend-modal" role="dialog" aria-modal="true" aria-labelledby="legend-h2">
+      <div class="legend-card" id="legend-card">
+        <button class="close-btn" id="legend-close" aria-label="Close map key">✕</button>
+        <div class="legend-drag" id="legend-drag">
+          <h2 class="legend-h2" id="legend-h2">Map key</h2>
+          <p class="legend-sub">A quick guide to the icons and styles used in this curriculum map.</p>
+        </div>
+
+        <div class="legend-row">
+          <h3 class="legend-h3">Course level</h3>
+          <div class="legend-items">
+            <div class="legend-item"><span class="swatch" style="background:#0284c7"></span><span>100 · Intro</span></div>
+            <div class="legend-item"><span class="swatch" style="background:#059669"></span><span>200 · Foundations</span></div>
+            <div class="legend-item"><span class="swatch" style="background:#7c3aed"></span><span>300 · Intermediate</span></div>
+            <div class="legend-item"><span class="swatch" style="background:#db2777"></span><span>400 · Advanced</span></div>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <h3 class="legend-h3">Card style</h3>
+          <div class="legend-items">
+            <div class="legend-item">
+              <span class="ex-card" style="color:#0284c7;background:#e0f2fe"></span>
+              <span>Required Core / Capstone (filled)</span>
+            </div>
+            <div class="legend-item">
+              <span class="ex-card" style="color:#db2777;background:#ffffff"></span>
+              <span>Elective (white fill, colored outline)</span>
+            </div>
+            <div class="legend-item">
+              <span class="ex-card" style="color:#7c3aed;background:#ede9fe;border-style:dashed"></span>
+              <span>Independent Study or Topics</span>
+            </div>
+            <div class="legend-item">
+              <span class="ex-card" style="color:#64748b;background:#f1f5f9;border-style:dashed;opacity:.7"></span>
+              <span>External requirement (MAT / STA / ECO)</span>
+            </div>
+            <div class="legend-item">
+              <span class="ex-card" style="color:#d97706;background:#fef3c7"></span>
+              <span>Class Standing (virtual node)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <h3 class="legend-h3">On the card</h3>
+          <div class="legend-items">
+            <div class="legend-item"><span class="star-icon">★</span><span>Capstone course (CSC 402)</span></div>
+            <div class="legend-item"><span class="cert-dot" style="background:#10b981">S</span><span>Cybersecurity Certificate</span></div>
+            <div class="legend-item"><span class="cert-dot" style="background:#ec4899">C</span><span>Cloud Engineering Certificate</span></div>
+            <div class="legend-item"><span class="cert-dot" style="background:#dc2626">!</span><span>Has an accelerated-program partner — pick one</span></div>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <h3 class="legend-h3">Arrows</h3>
+          <div class="legend-items legend-items-arrows">
+            <div class="legend-item">
+              <svg width="56" height="10" viewBox="0 0 56 10" aria-hidden="true">
+                <line x1="0" y1="5" x2="48" y2="5" stroke="#94a3b8" stroke-width="2"/>
+                <polygon points="48,2 56,5 48,8" fill="#94a3b8"/>
+              </svg>
+              <span>Required prerequisite</span>
+            </div>
+            <div class="legend-item">
+              <svg width="56" height="10" viewBox="0 0 56 10" aria-hidden="true">
+                <line x1="0" y1="5" x2="48" y2="5" stroke="#d97706" stroke-width="2" stroke-dasharray="6 4"/>
+                <polygon points="48,2 56,5 48,8" fill="#d97706"/>
+              </svg>
+              <span>Alternative — OR (junior standing)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend-row">
+          <h3 class="legend-h3">Interaction</h3>
+          <ul class="legend-tips">
+            <li><b>Desktop:</b> hover a course to preview its chain, click to open the details panel.</li>
+            <li><b>Mobile:</b> single-tap a course to trace its prerequisite chain, <b>double-tap</b> the same course to open its details.</li>
+            <li>Tap a certificate (Cybersecurity / Cloud) to highlight every course on that path.</li>
+            <li>Switch programs from the sidebar — <b>BS in CS</b>, <b>Minor · CS</b>, or <b>Minor · IT</b> — each shows only its required courses.</li>
+            <li>Drag empty space to pan; pinch or scroll to zoom.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="hint">Drag to pan · Scroll to zoom · Hover to trace · Click for details</div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <aside class="details" id="details">
+    <div class="details-inner">
+      <div class="details-header">
+        <button class="close-btn" id="details-close" aria-label="Close">✕</button>
+        <div class="details-code" id="details-code"></div>
+        <div class="details-title" id="details-title"></div>
+        <div class="details-badges" id="details-badges"></div>
+      </div>
+      <div class="details-body">
+        <div id="details-desc"></div>
+        <div class="details-section">
+          <h4>Prerequisites</h4>
+          <div class="prereq-list" id="prereq-list"></div>
+        </div>
+        <div class="details-section">
+          <h4>Unlocks</h4>
+          <div class="prereq-list" id="unlocks-list"></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+<script>
+const DEFAULT_CATALOG = `CSC 141. Computer Science I. 3 Credits. An introduction to programming using Python. Topics covered include basic program design; program flow including decisions, functions, and loops; command line and file input/output; variables and types; and string and sequence processing.
+
+CSC 142. Computer Science II. 3 Credits. This course introduces the design and implementation of classes and objects, arrays using primitive types and Strings, array of objects, sorting and searching through arrays, recursion, aggregate objects and an introduction to graphical User Interfaces (GUIs). Prerequisite: CSC 141.
+
+CSC 220. Foundations of Computer Science. 3 Credits. Topics include regular and context free grammars and languages, computational logic, finite state machines, and parsing. Prerequisites: MAT 151 and MAT 161.
+
+CSC 231. Computer Systems. 3 Credits. This course introduces the fundamental concepts of modern computer systems. Coverage includes an introduction to CPUs, memory, storage, networking, operating systems, and parallel and distributed programming. Assembly language and C will be introduced and used to explore how computer systems interpret and execute programs. Prerequisites: CSC 142 and MAT 151.
+
+CSC 240. Computer Science III. 3 Credits. This course focuses on more advanced topics in object-oriented programming, including project design, planning, and testing using milestones and checklists. Programming topics include text processing (including StringBuilder and StringTokenizer classes), inheritance, polymorphism, abstract classes, interfaces, generic classes, exception classes, exception throwing and handling, random access files, serialization and an introduction to some basic data structures, such as collection classes and linked lists. Prerequisites: CSC 142.
+
+CSC 241. Data Structures & Algorithms. 3 Credits. Data structures and related algorithms are studied using object-oriented programming, such as Java. Topics include data abstraction, recursion, lists, stacks, queues, linked lists, trees, hashing, searching and sorting algorithms, and the evaluation of algorithm efficiency. Prerequisites: CSC 240, MAT 151, MAT 161.
+
+CSC 301. Computer Security & Ethics. 3 Credits. An introduction to Computer Security and the ethical underpinnings of security. The basic objectives of creating a secure system, attack methods and defenses are discussed. Prerequisites: three CSC, CST, or CSW courses.
+
+CSC 302. Computer Security. 3 Credits. This course will provide an introduction to critical and diverse topics in computer security, such as cryptography, network security, and operating systems security. Prerequisites: CSC 301 and CSC 335.
+
+CSC 317. Introduction to Digital Image Processing. 3 Credits. This course focuses on fundamental concepts about the visualization of various data in the disciplines of digital image processing, computer graphics, photometric processing, and image analysis. The application of python programming will also prepare students for learning Computer Vision and Machine Learning in the future. This course will focus on mathematical foundations and graphic tools including Matplotlib (a graphic plotting library) and OpenCV (an image processing and analysis library for Computer Vision). Some fundamental definitions about image processing or analysis will be introduced. Prerequisite: CSC 240.
+
+CSC 321. Database Management Systems. 3 Credits. Characteristics of generalized database management systems. Surveys of different database models that are currently used. The design and implementation of a database system. Prerequisites: CSC 142 and CSC 241.
+
+CSC 331. Operating Systems. 3 Credits. This course is a general survey of elements of operating systems with in-depth studies of certain features of specific operating systems. Elements of concurrent programming are studied, such as the mutual exclusion problem, semaphores, and monitors. Additionally, the following topics are covered: process scheduling and deadlock avoidance; memory management issues such as paging and segmentation; organization and protection of file systems. Prerequisites: CSC 220 and CSC 240 and CSC 241, and {CSC 231 or CSC 242}.
+
+CSC 335. Data Communications and Networking I. 3 Credits. An overview of the various aspects of modern data and telecommunications. Discussion of the hardware and software facets of the transmission of information in the forms of voice, data, text, and image. Topics include communication protocols, transmission technologies, analog/digital transmission, communications media, public data networks, LANs, and ISDN. Prerequisites: CSC 240.
+
+CSC 341. Algorithms II. 3 Credits. This course provides an in-depth exploration of advanced algorithmic techniques essential for solving complex computational problems. Building on foundational knowledge of data structures and algorithms, students will study algorithm complexity analysis, including Big O, Big Theta, and Big Omega notations and complexity classes such as P, NP, and NP-complete. The course covers advanced sorting algorithms, divide-and-conquer strategies, dynamic programming, and greedy algorithms. Students will also examine fundamental graph algorithms, including shortest paths, spanning trees, and network flow solutions, with real-world optimization and data processing applications. Emphasis is placed on theoretical understanding and practical implementation, equipping students with the skills to design, implement, and evaluate efficient algorithmic solutions. Through hands-on coding and problem-solving, students will enhance their computational thinking and prepare for advanced coursework or careers in software development, data science, and related fields. Pre / Co requisites: CSC341 requires a prerequisite of CSC241.
+
+CSC 345. Programming Language Concepts/Paradigms. 3 Credits. An examination of the conceptual underpinning of programming languages and of the paradigms into which they fall. Topics will be drawn from those comprising the field of programming language such as abstraction, bindings, concurrency, design, encapsulation, history, representation, storage, and types. Programming projects will focus on languages within the functional, declarative, and object-oriented paradigms such as Common Lisp, ML, Prolog, and CLOS rather than the familiar imperative paradigm. Prerequisites: CSC 220 and CSC 241.
+
+CSC 365. Data Analytics. 3 Credits. This course begins with concepts such as variables, strings, decisions, functions, loops, file input/output, lists, arrays, object-oriented programming such as constructor, inheritance, and polymorphism. It then focuses on more advanced topics such as plotting graphs and using Python packages, machine learning, and statistics. Students will develop the skills necessary to use communication as a problem solving tool in the course. Special emphasis is placed on the student's performance. Prerequisites: CSC141 and CSC142.
+
+CSC 381. Data Science. 3 Credits. This course will introduce data science and related programming concepts. The course includes basic statistics, an intro to machine learning, and an intro to data visualization. Students will learn how to read different types of data files and use statistical tools and machine learning tools to analyze them. Also, they will use basic data visualization techniques to present the result to help in decision-making. A programming language, such as, Python will be used in the class to help students develop understanding of the above concepts. Prerequisites: Pre / Co requisites: CSC381 requires prerequisites of CSC141 and {MAT121, MAT125, or ECO251} and junior standing.
+
+CSC 382. Applied Machine Learning. 3 Credits. This course introduces machine learning techniques. Students will understand machine learning algorithms as they work with different algorithms and learn to build them from scratch. They will also gain theoretical and practical skills by applying machine learning to real-world problems. Prerequisites: CSC382 requires prerequisites of CSC381 or STA 428 or junior standing.
+
+CSC 400. Internship. 3-6 Credits. The student works in the area of computer science that is his or her specialty. Prerequisites: CSC 141 and CSC 142 and CSC 240 and CSC 241 and MAT 151 and MAT 161. Permission of the Department required to add.
+
+CSC 402. Software Engineering. 3 Credits. This course aims to introduce students to apply programming knowledge and technical skills learned in previous CS classes to practical aspects of software engineering. This includes problem formulation, requirements engineering, architecture, design, implementation, integration, documentation and delivery of a software system. The goal will be for each student to have had a hand in building complete and useful applications that could be released for real-world use. This course is a highly interactive course, in which students are expected to fully participate in class-based activities and discussions. Students will also be expected to spend a significant amount of time on technical writing, presentations, and practical software development as part of a team project. This is the required Capstone course for the program/major. Pre / Co requisites: CSC 402 requires a prerequisite of CSC 241. Distance education offering may be available. Typically offered in Fall & Spring.
+
+CSC 404. Software Testing. 3 Credits. This course consists of two components: software engineering and software testing. Software testing is a critical phase in the software development life cycle for the quality assurance of software. This course will take a practitioner's approach. Students will use hands-on labs to learn Node.js when we cover the principles of software testing. Testing theory topics may include: Math for testing engineers (discrete math, graph theory), Testing Categories (unit testing, integration testing, system testing, load testing, functional testing, and retrospective testing), Testing Approaches (white-box testing, black-box testing), and Testing Methodologies (boundary value testing, domain testing, equivalence class testing, decision-table-based testing, path testing, and data flow testing). Prerequisites: CSC 240 and CSC 241.
+
+CSC 406. Design Patterns. 3 Credits. This course introduces essential software design patterns and principles, focusing on building maintainable and scalable systems using Java. Topics include general program design principles, the Unified Modeling Language (UML), and object-oriented design principles such as SOLID. Students will learn software refactoring techniques, including both primitive and composite methods, to improve code quality and maintainability. Key patterns—such as delegate, library, and layering design patterns—will be explored, along with concepts of software product lines for managing product variability. Additional advanced topics include Java reflection and meta-programming, static software analysis, and the use of UML to visualize system architecture. By the end of the course, students will be able to design flexible, reusable, and efficient software systems that follow best practices for maintainability and scalability. Assignments and exams will assess both theoretical understanding and practical application of the course material. Pre / Co requisites: CSC 402 requires a prerequisite of CSC 241.
+
+CSC 416. Design/Construction Compilers. 3 Credits. Covers the basic topics in compiler design including lexical analysis, syntax analysis, error handling, symbol tables, intermediate code generation, and some optimization. Programming assignments will build various pieces of a compiler for a small language. Prerequisites: CSC 220 and CSC 240 and CSC 241, and {CSC 231 or CSC 242}.
+
+CSC 417. User Interfaces. 3 Credits. This course deals with database-driven graphical user interface applications. The Model-View-Controller software paradigm is used as a guiding principle for the applications developed. The course features applications using Java-based components as well as web-based components with a modern server-side scripting language such as PHP. Most of the course work is based on developing a complex, large scale web database system with the goal of implementing this system within a web application framework. Prerequisites: CSC 241.
+
+CSC 418. Modern Web Applications Using Server-Side Technologies. 3 Credits. This course provides training in the area of building web applications using Node.js (with Express, and MongoDB) for the back-end and EJS for the front-end user interface. JavaScript has been a client-side script programming language until later in 2009 when Google combined its V8 search engine with Node.JS. Since then, JavaScript has become a full-stack scripting language from the client-side to the server-side. Starting from building a web site without programming, students will be guided with hands-on labs and develop a website using Node.JS and EJS for the front-end. Prerequisites: CSC 240.
+
+CSC 461. Android App Development. 3 Credits. This is an introductory course on Android app development. Students will learn the entire app development cycle from an idea, to a storyboard, to a functional shell, to a working prototype, to an alpha app. They will learn basics of UI selection, interfacing with device hardware, persistence, requesting permissions from the user, connecting to a web API, and google play store presence. Additional topics can be explored by request of the students. Prerequisites: CSC 241.
+
+CSC 466. Distributed and Parallel Computing. 3 Credits. This course introduces students to modern distributed platforms by examining several important technologies in the areas of parallel and distributed computing and how these technologies help in solving computational and data-intensive problems. Students will apply specific trade-offs for parallel application and algorithms development, performance, and management on different distributed platforms. Prerequisites: CSC 231 and CSC 241.
+
+CSC 467. Big Data Engineering. 3 Credits. This course will investigate engineering approaches in solving challenges in data-intensive and big data computing problems. Course topics include distributed tools and parallel algorithms that help with acquiring, cleaning, and mining very large amount of data, including streaming data. Prerequisites: CSC 241.
+
+CSC 468. Introduction to Cloud Computing. 3 Credits. This course provides an introductory overview to the technologies that enable cloud computing. Topics covered include basic concepts about cloud computing and advanced technical concepts regarding virtualization, containerization, and orchestration. Prerequisites: CSC 231.
+
+CSC 471. Modern Malware Analysis. 3 Credits. This course will introduce students to modern malware analysis techniques through lectures and hands-on interactive analysis of real-world samples, including exploring various recent attacks. These examples and studies will help the students develop a foundation and a well-rounded view of cybersecurity research. Participants in the course will also read and discuss research papers, as well as conducting an independent project in a topic related to cyber risk and malware analysis. After taking this course students will be equipped with the skills to analyze advanced contemporary malware using both static and dynamic analysis. Prerequisites: {CSC 231 or CSC 242} and CSC 302.
+
+CSC 472. Software Security. 3 Credits. This course is primarily aimed at people interested in software security, reverse engineering, and low-level software. In this course, students will explore the foundations of software security. They will consider important software vulnerabilities and attacks that exploit them--such as buffer overflows, SQL injection, and session hijacking--and they will consider defenses that prevent or mitigate these attacks, including advanced testing and program analysis techniques. Prerequisites: {CSC 231 or CSC 242}, and CSC 302.
+
+CSC 476. Game Development. 3 Credits. This project-based course is concerned with game development and scripting using a modern game engine, such as Unity, with a modern programming language, such as C#. Topics include coding standards, design principles, debugging, game loops, physics engines, lighting, meshes, colliders, databases for persisting data, game lobbies, networked multiplayer games, and building for multiple resolutions and platforms. Individual and team-based assignments will utilize version control. Prerequisites: CSC 241.
+
+CSC 478. Cloud Engineering. 3 Credits. This course provides students with more in-depth understanding of advanced cloud computing technical concepts. Through the perspective of infrastructure-as-code and project-based learning activities, students will study how cloud computing orchestration works to enable the deployment of large-scale complex services in business and academic environments. Prerequisites: CSC468.
+
+CSC 481. Artificial Intelligence. 3 Credits. Artificial Intelligence (AI) is concerned with the replication or simulation on a machine of the complex behaviors associated with intelligence. Topics will be drawn from any of those comprising the field of AI such as agent architectures, automatic truth maintenance, constraint satisfaction, expert systems, fuzzy logic, games, genetic algorithms, knowledge representation, machine learning, neural networks and connectionism, natural language processing, planning, reasoning, robotics, search, theorem proving, and vision. Projects requiring coding will focus on an AI language such as Common Lisp or Prolog. Prerequisites: CSC 220 and CSC 241.
+
+CSC 490. Independent Project in Computer Science. 3 Credits. The student designs and implements a software system. Project problems are drawn from local industry and university departments. A computer science faculty member supervises each project. Permission of the Department required to add.
+
+CSC 495. Topics in Computer Science. 3 Credits. Topic announced at time of offering.
+
+CSC 496. Topics in Complex Large-Scale Systems. 3 Credits. Topics in large scale systems. Topics announced at the time of offering.
+
+CSC 497. Topics in Computer Security. 3 Credits. Topic in computer security announced at time of offering.
+
+CSC 499. Independent Study in Computer Science. 3 Credits. In conjunction with the instructor, the student selects study topics via literature search. Permission of the Department required to add.
+
+CSC 115. Introduction to Computer Programming. 3 Credits. Introductory programming course used as the foundation for the Minor in Information Technology.
+
+CST 199. Computer Science-Technology Transfer Credits. 1-9 Credits. Transfer credits for the Minor in Information Technology. Repeatable for credit.
+
+CST 211. Security and Ethics in IT. 3 Credits. This course introduces fundamental security issues in Information Technology.
+
+CST 221. Database Systems. 3 Credits. This course introduces students to the role of databases in information technology.
+
+CST 235. Network and System Administration. 3 Credits. This course is an entry level course that serves as an introduction to network technologies (computer and cellular networks, the Internet, the Internet of Things, etc.). It requires a minimum level of programming and math. The objective of this course is to provide a broad overview of networking technologies with a focus on the TCP/IP model and includes Cisco device related labs. The course introduces concepts in data communications, Internet technologies and basic system performance analysis. Concepts covered included TCP/IP, LANs, WANs, internetworking, signals, communications media, routers, and switches.
+
+CSW 116. Computer Programming Laboratory. 3 Credits. This is a special winter session course introducing foundations of Computer Science, with the goal of prompting student's interest and programming skills. Topics include, but not limited to: data processing and analysis, UML design, Visual Basic programming, Database system, network system, etc.
+
+CSW 131. Introduction to Web Design. 3 Credits. This course will cover HTML and introductory JavaScript programming to provide students with a basic technology skill set for pursuing other topics in Web technology. Use of some simple Web authoring and graphics packages, but a focus on the structure and semantics of HTML and JavaScript.
+
+CSW 199. Computer Software Computer Science Transfer Elective. 1-15 Credits. Transfer credits for the Minor in Information Technology. Repeatable for credit.
+
+CSW 315. Introduction to Web Programming. 3 Credits. This course will continue the design and methodologies practices that were begun in CSW 131. Beginning with an introduction to project management, the course will look at specific design practices and technology integration. In addition, the course will focus on learning to use a commercial editor and delve into server-sided scripting languages. For non-majors only. This can be used as a capstone fulfillment. Prerequisite: CSC 115 and CSW 131.
+
+CSC 512. Computer Programming I. 3 Credits. First course in the Post-Baccalaureate Certificate in Programming Fundamentals. Introduces fundamentals of programming.
+
+CSC 513. Computer Programming II. 3 Credits. Second course in the Post-Baccalaureate Certificate in Programming Fundamentals. Object-oriented programming concepts. Prerequisite: CSC 512.
+
+CSC 516. Introduction to Data Structures and Algorithms. 3 Credits. Third course in the Post-Baccalaureate Certificate in Programming Fundamentals. Covers fundamental data structures and algorithms. Prerequisite: CSC 513.
+
+CSC 520. Foundations of Computer Science. 3 Credits. Core graduate course on the formal foundations of computer science. Required for the MS in Computer Science.
+
+CSC 525. Operating Systems. 3 Credits. Graduate-level operating systems. May substitute for CSC 331 in the accelerated BS→MS program.
+
+CSC 530. Data Structures. 3 Credits. Core graduate course on advanced data structures. Required for the MS in Computer Science.
+
+CSC 535. Networks and Data Communications. 3 Credits. Graduate-level networking and data communications. May substitute for CSC 335 in the accelerated BS→MS program.
+
+CSC 540. Programming Languages. 3 Credits. Core graduate course on programming language concepts and design. Required for the MS in Computer Science.
+
+CSC 545. Database System Concepts. 3 Credits. Graduate-level database systems. May substitute for CSC 321 in the accelerated BS→MS program.
+
+CSC 555. Software Engineering. 3 Credits. Graduate-level software engineering. May substitute for CSC 402 in the accelerated BS→MS program.
+
+CSC 560. Analysis of Algorithms. 3 Credits. Core graduate course on algorithm design and analysis. Required for the MS in Computer Science.
+
+CSC 565. Compiler Design. 3 Credits. Graduate-level compiler design. May substitute for CSC 416 in the accelerated BS→MS program.
+
+CSC 568. Introduction to Cloud Computing. 3 Credits. Graduate-level cloud computing fundamentals. Part of the Certificate in Cloud Engineering and other graduate certificates.
+
+CSC 571. Information Visualization. 3 Credits. Graduate course on information visualization. Part of the AI Engineering certificate.
+
+CSC 572. Computer Vision. 3 Credits. Graduate course on computer vision. Part of the AI Engineering certificate.
+
+CSC 574. Machine Learning on Tiny Devices. 3 Credits. Graduate course on machine learning for edge devices. Part of the AI Engineering certificate.
+
+CSC 575. Artificial Intelligence. 3 Credits. Graduate-level AI. May substitute for CSC 481 in the accelerated BS→MS program. Also part of the AI Engineering certificate.
+
+CSC 576. Data Science. 3 Credits. Graduate-level data science. Substitutable in the accelerated BS→MS program. Also part of the AI Engineering certificate.
+
+CSC 577. Natural Language Processing. 3 Credits. Graduate-level natural language processing. Substitutable in the accelerated BS→MS program.
+
+CSC 578. Cloud System Engineering. 3 Credits. Graduate course on cloud orchestration and infrastructure-as-code. Part of the Certificate in Cloud Engineering.
+
+CSC 579. Machine Learning. 3 Credits. Graduate course on machine learning algorithms. Part of the AI Engineering certificate.
+
+CSC 581. Topics in Computer Science. 3 Credits. Topic announced at time of offering. Substitutable in the accelerated BS→MS program. Repeatable for credit.
+
+CSC 582. Topics in Information Security. 3 Credits. Topic in information security announced at time of offering.
+
+CSC 583. Topics in Computer Security. 3 Credits. Topic in computer security announced at time of offering. Substitutable in the accelerated BS→MS program.
+
+CSC 584. Topics in Web Technology. 3 Credits. Topic in web technology announced at time of offering. Substitutable in the accelerated BS→MS program.
+
+CSC 585. User Interfaces. 3 Credits. Graduate-level user interface design and implementation. May substitute for CSC 417 in the accelerated BS→MS program.
+
+CSC 586. System Administration and Security. 3 Credits. Graduate-level system administration and security. Substitutable in the accelerated BS→MS program.
+
+CSC 587. Modern Web Applications Using Server-Side Technologies. 3 Credits. Graduate-level server-side web technologies. May substitute for CSC 418 in the accelerated BS→MS program.
+
+CSC 600. Advanced Seminar. 3 Credits. Advanced graduate seminar; topic varies. Substitutable in the accelerated BS→MS program. Repeatable with different topics.
+
+CSC 603. Advanced Seminar in Computer Security. 3 Credits. Advanced graduate seminar in computer security. Substitutable in the accelerated BS→MS program.
+
+CSC 604. Advanced Seminar in Web Technology. 3 Credits. Advanced graduate seminar in web technology.
+
+CSC 605. Internship in Computer Science. 3 Credits. Graduate-level internship. May substitute for CSC 400 in the accelerated BS→MS program.
+
+CSC 610. Independent Research. 3 Credits. Research course. Required precursor to the MS thesis. Substitutable in the accelerated BS→MS program. May count for credit only once.
+
+CSC 620. Thesis. 3 Credits. MS thesis course taken in the semester following CSC 610. Prerequisite: CSC 610.
+
+STA 511. Introduction to Statistical Computing and Data Management. 3 Credits. Graduate statistics course used in the Information Systems certificate.
+
+CRJ 555. Criminal Justice Topics in Computer Crime. 3 Credits. Used in the graduate Computer Security (Information Assurance) certificate.`;
+
+// ---------- Parser ----------
+function parseCatalog(text) {
+  const courses = [];
+  const headerRe = /([A-Z]{2,4})\s+(\d{3})\.\s+([^.]+?)\.\s+([\d\-]+)\s+Credits?\./g;
+  const heads = [];
+  let m;
+  while ((m = headerRe.exec(text)) !== null) {
+    heads.push({ idx: m.index, end: m.index + m[0].length, prefix: m[1], num: m[2], title: m[3].trim(), credits: m[4] });
+  }
+  for (let i = 0; i < heads.length; i++) {
+    const h = heads[i];
+    const bodyEnd = i + 1 < heads.length ? heads[i+1].idx : text.length;
+    const body = text.slice(h.end, bodyEnd).trim();
+    const code = `${h.prefix} ${h.num}`;
+    const prereqRe = /(Pre\s*\/\s*Co\s*requisites?|Prerequisites?|Prerequisite|Co\s*-?\s*requisites?)\s*:/i;
+    const pm = body.match(prereqRe);
+    let prereqs = [];
+    let description = body;
+    if (pm) {
+      description = body.slice(0, pm.index).trim();
+      const tail = body.slice(pm.index + pm[0].length);
+      const codeRe = /([A-Z]{2,4})\s*(\d{3})/g;
+      let cm;
+      while ((cm = codeRe.exec(tail)) !== null) {
+        const pcode = `${cm[1]} ${cm[2]}`;
+        if (pcode !== code) prereqs.push(pcode);
+      }
+      prereqs = [...new Set(prereqs)];
+    }
+    courses.push({ code, prefix: h.prefix, num: parseInt(h.num, 10), title: h.title, credits: h.credits, description, prereqs });
+  }
+  return courses;
+}
+
+// ---------- Course metadata ----------
+// Structural facts about each course (its role in the curriculum and which
+// programs/certificates it belongs to). Keyed by course code. Kept separate
+// from the catalog *text* so admins can't accidentally delete it.
+const COURSE_META = {
+  'CSC 141': { category: 'core', programs: ['bs', 'minor-cs'] },
+  'CSC 142': { category: 'core', programs: ['bs', 'minor-cs'] },
+  'CSC 220': { category: 'core' },
+  'CSC 231': { category: 'core' },
+  'CSC 240': { category: 'core', programs: ['bs', 'minor-cs'] },
+  'CSC 241': { category: 'core', programs: ['bs', 'minor-cs'] },
+  'CSC 301': { category: 'core', certs: ['cybersec'], programs: ['bs', 'minor-it'], prereqNote: 'Successful completion of any three CSC, CST, or CSW courses.' },
+  'CSC 302': { category: 'elective', certs: ['cybersec'] },
+  'CSC 317': { category: 'elective' },
+  'CSC 321': { category: 'elective', accelGrad: 'CSC 545' },
+  'CSC 331': { category: 'elective', certs: ['cloud'],            accelGrad: 'CSC 525' },
+  'CSC 335': { category: 'elective', certs: ['cybersec', 'cloud'], accelGrad: 'CSC 535' },
+  'CSC 341': { category: 'elective' },
+  'CSC 345': { category: 'core' },
+  'CSC 365': { category: 'elective' },
+  'CSC 381': { category: 'elective', altPrereqs: ['Junior'] },
+  'CSC 382': { category: 'elective', altPrereqs: ['Junior'] },
+  'CSC 400': { category: 'elective', accelGrad: 'CSC 605' },
+  'CSC 402': { category: 'capstone', certs: ['cybersec'],          accelGrad: 'CSC 555' },
+  'CSC 404': { category: 'elective' },
+  'CSC 406': { category: 'elective' },
+  'CSC 416': { category: 'elective', accelGrad: 'CSC 565' },
+  'CSC 417': { category: 'elective', accelGrad: 'CSC 585' },
+  'CSC 418': { category: 'elective', accelGrad: 'CSC 587' },
+  'CSC 461': { category: 'elective' },
+  'CSC 466': { category: 'elective' },
+  'CSC 467': { category: 'elective' },
+  'CSC 468': { category: 'elective', certs: ['cloud'] },
+  'CSC 471': { category: 'elective', certs: ['cybersec'] },
+  'CSC 472': { category: 'elective', certs: ['cybersec'] },
+  'CSC 476': { category: 'elective' },
+  'CSC 478': { category: 'elective', certs: ['cloud'] },
+  'CSC 481': { category: 'elective', accelGrad: 'CSC 575' },
+  'CSC 490': { category: 'independent' },
+  'CSC 495': { category: 'topics' },
+  'CSC 496': { category: 'topics' },
+  'CSC 497': { category: 'topics' },
+  'CSC 499': { category: 'independent' },
+
+  // Minor in Information Technology — courses that only appear in /minor/it.
+  'CSC 115': { category: 'core',     programs: ['minor-it'] },
+  'CST 199': { category: 'topics',   programs: ['minor-it'] },
+  'CST 211': { category: 'elective', programs: ['minor-it'] },
+  'CST 221': { category: 'core',     programs: ['minor-it'] },
+  'CST 235': { category: 'core',     programs: ['minor-it'] },
+  'CSW 116': { category: 'elective', programs: ['minor-it'] },
+  'CSW 131': { category: 'core',     programs: ['minor-it'] },
+  'CSW 199': { category: 'topics',   programs: ['minor-it'] },
+  'CSW 315': { category: 'core',     programs: ['minor-it'] },
+
+  // Post-Baccalaureate Programming Fundamentals (not part of MS).
+  'CSC 512': { category: 'core',     programs: ['cert-prog-fund'] },
+  'CSC 513': { category: 'core',     programs: ['cert-prog-fund'] },
+  'CSC 516': { category: 'core',     programs: ['cert-prog-fund'] },
+
+  // MS in CS — Core (4 required courses).
+  'CSC 520': { category: 'core',     programs: ['ms'] },
+  'CSC 530': { category: 'core',     programs: ['ms'] },
+  'CSC 540': { category: 'core',     programs: ['ms'] },
+  'CSC 560': { category: 'core',     programs: ['ms'] },
+
+  // MS in CS — Electives. 'accel' = substitutable in the accelerated BS→MS program.
+  'CSC 525': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 535': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 545': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 555': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 565': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 575': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 576': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 577': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 581': { category: 'topics',   programs: ['ms', 'ms-accel'] },
+  'CSC 583': { category: 'topics',   programs: ['ms', 'ms-accel'] },
+  'CSC 584': { category: 'topics',   programs: ['ms', 'ms-accel'] },
+  'CSC 585': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 586': { category: 'elective', programs: ['ms', 'ms-accel'] },
+  'CSC 587': { category: 'elective', programs: ['ms', 'ms-accel'] },
+
+  // Additional MS courses (graduate certificates).
+  'CSC 568': { category: 'elective', programs: ['ms'] },
+  'CSC 571': { category: 'elective', programs: ['ms'] },
+  'CSC 572': { category: 'elective', programs: ['ms'] },
+  'CSC 574': { category: 'elective', programs: ['ms'] },
+  'CSC 578': { category: 'elective', programs: ['ms'] },
+  'CSC 579': { category: 'elective', programs: ['ms'] },
+  'CSC 582': { category: 'topics',   programs: ['ms'] },
+
+  // MS in CS — Advanced (600-level).
+  'CSC 600': { category: 'topics',     programs: ['ms', 'ms-accel'] },
+  'CSC 603': { category: 'topics',     programs: ['ms', 'ms-accel'] },
+  'CSC 604': { category: 'topics',     programs: ['ms'] },
+  'CSC 605': { category: 'elective',   programs: ['ms', 'ms-accel'] },
+  'CSC 610': { category: 'independent',programs: ['ms', 'ms-accel'] },
+  'CSC 620': { category: 'capstone',   programs: ['ms'] },
+
+  // Non-CSC graduate courses referenced by certificate programs.
+  'STA 511': { category: 'elective', programs: ['ms'] },
+  'CRJ 555': { category: 'elective', programs: ['ms'] },
+};
+
+// Program views. Each entry decides which courses are visible.
+// `includeOnly` is exclusive (minor views show only listed codes + their
+// auto-pulled external prereqs); the BS view uses a `excludeIf` predicate
+// against the per-course `programs` array.
+const VIEWS = {
+  'bs': {
+    key: 'bs',
+    label: 'BS in CS',
+    title: 'BS in Computer Science',
+    subtitle: 'Full undergraduate Computer Science curriculum.',
+    hash: '#/',
+    excludeIf: (c) => Array.isArray(c.meta?.programs) && !c.meta.programs.includes('bs'),
+  },
+  'minor-cs': {
+    key: 'minor-cs',
+    label: 'Minor in CS',
+    title: 'Minor in Computer Science',
+    subtitle: '19 credits — four CS core courses plus calculus and discrete math.',
+    hash: '#/minor/cs',
+    includeOnly: ['CSC 141', 'CSC 142', 'CSC 240', 'CSC 241', 'MAT 151', 'MAT 161'],
+  },
+  'minor-it': {
+    key: 'minor-it',
+    label: 'Minor in IT',
+    title: 'Minor in Information Technology',
+    subtitle: '18 credits covering programming, security, databases, web tech, and networking.',
+    hash: '#/minor/it',
+    includeOnly: ['CSC 115', 'CSC 301', 'CST 221', 'CST 235', 'CSW 131', 'CSW 315'],
+  },
+  'ms': {
+    key: 'ms',
+    label: 'MS',
+    title: 'MS in Computer Science',
+    subtitle: '30-credit Master of Science: 4 core + ≥4 electives + ≥2 advanced courses.',
+    hash: '#/ms',
+    excludeIf: (c) => !(c.meta?.programs && c.meta.programs.includes('ms')),
+    rules: [
+      'Total of <b>30 credits</b>: 12 core (4 courses) + at least 12 electives (≥4 of the listed 500-level) + at least 6 advanced (≥2 of the listed 600-level).',
+      'The four core courses (CSC 520 / 530 / 540 / 560) must be completed <b>within the first six courses</b> taken.',
+      'Core must be completed <b>before any 600-level</b> course can be taken.',
+      'No more than <b>two Advanced Seminar</b> courses total (CSC 600 / 603 / 604).',
+      'CSC 600 may be taken <b>twice</b> with different topics.',
+      'Thesis path: CSC 610 → CSC 620 in <b>successive semesters</b>. CSC 610 counts only once toward the degree.',
+    ],
+  },
+  'ms-accel': {
+    key: 'ms-accel',
+    label: 'Accelerated',
+    title: 'Accelerated BS → MS in Computer Science',
+    subtitle: 'Substitute up to 4 MS electives for matching BS electives. Pairs linked by a red dashed line cannot both be taken.',
+    hash: '#/ms/accelerated',
+    excludeIf: (c) => {
+      const ps = c.meta?.programs;
+      if (!ps) return false;           // unlabelled (BS default) → include
+      if (ps.includes('bs')) return false;
+      if (ps.includes('ms-accel')) return false;
+      return true;                     // ms-only / cert-only → exclude
+    },
+    rules: [
+      '<b>Up to 4 MS electives</b> may substitute for their BS equivalents — excluding the combinations linked by a <span style="color:#dc2626">red dashed line</span>. For each such pair, only one course counts toward the degree.',
+      'All MS stipulations also apply once you enter the MS portion (core-first rule, ≤2 seminars, etc.).',
+      'A grade of <b>C-</b> or better is required in BS courses; CSC 402 fulfills the BS capstone.',
+    ],
+  },
+};
+
+const CERT_INFO = {
+  cybersec: { label: 'Cybersecurity Certificate',     color: '#10b981', initial: 'S' },
+  cloud:    { label: 'Cloud Engineering Certificate', color: '#ec4899', initial: 'C' },
+};
+
+const CATEGORY_INFO = {
+  core:        { label: 'Required Core' },
+  capstone:    { label: 'Capstone' },
+  elective:    { label: 'Elective' },
+  independent: { label: 'Independent Study' },
+  topics:      { label: 'Topics Course' },
+};
+
+// Virtual "class standing" nodes. These aren't courses — they're status
+// gates that the catalog text lists as alternative prerequisites (e.g.
+// "CSC 381 or junior standing"). Drawn as amber pseudo-cards in the
+// Prerequisites column with dashed amber edges to the courses they unlock.
+const STANDING_DEFS = {
+  'Junior': {
+    title: 'Standing · ≥60 cr',
+    description: 'Class standing earned at 60 to 89.5 cumulative credit hours, per the WCU Academic Records policy (Freshman 0–29.5, Sophomore 30–59.5, Junior 60–89.5, Senior 90+). Accepted as an alternative to specific course prerequisites for some 300-level Computer Science courses (CSC 381, CSC 382).',
+  },
+};
+
+// ---------- State ----------
+const COLORS = { 100: '#0284c7', 200: '#059669', 300: '#7c3aed', 400: '#db2777', 500: '#4f46e5', 600: '#1e293b', external: '#64748b', standing: '#d97706' };
+const SOFT   = { 100: '#e0f2fe', 200: '#d1fae5', 300: '#ede9fe', 400: '#fce7f3', 500: '#eef2ff', 600: '#e2e8f0', external: '#f1f5f9', standing: '#fef3c7' };
+const LEVEL_LABELS = {
+  external: 'Prerequisites',
+  100: '100 · Intro',
+  200: '200 · Foundations',
+  300: '300 · Intermediate',
+  400: '400 · Advanced',
+  500: '500 · Graduate',
+  600: '600 · Advanced Graduate',
+};
+const NW = 196, NH = 62, GAP_Y = 10, GAP_X = 64, MX = 70, MY = 110;
+const MAX_PER_SUBCOL = 9, SUBCOL_GAP = 22;
+const COL_ORDER = ['external', 100, 200, 300, 400, 500, 600];
+
+// Accelerated BS→MS mutual-exclusion pairs. In #/ms/accelerated, each pair
+// is drawn as a red dashed link to mark "cannot take both".
+const ACCEL_EXCLUSIONS = [
+  ['CSC 525', 'CSC 331'], // Operating Systems
+  ['CSC 535', 'CSC 335'], // Networking
+  ['CSC 545', 'CSC 321'], // Database
+  ['CSC 555', 'CSC 402'], // Software Engineering
+  ['CSC 565', 'CSC 416'], // Compilers
+  ['CSC 575', 'CSC 481'], // Artificial Intelligence
+  ['CSC 585', 'CSC 417'], // User Interfaces
+  ['CSC 587', 'CSC 418'], // Server-Side Technologies
+  ['CSC 605', 'CSC 400'], // Internship
+];
+
+let state = {
+  courses: [], byCode: {}, parents: {}, children: {},
+  nodes: [], edges: [], cols: [],
+  activeLevels: new Set([100, 200, 300, 400, 500, 600, 'external']),
+  focusCode: null,
+  view: 'bs',
+};
+
+function levelOf(c) {
+  if (c.external) return 'external';
+  if (c.num < 200) return 100;
+  if (c.num < 300) return 200;
+  if (c.num < 400) return 300;
+  if (c.num < 500) return 400;
+  if (c.num < 600) return 500;
+  return 600;
+}
+function colorFor(c) {
+  if (c.standing) return COLORS.standing;
+  return COLORS[levelOf(c)] || COLORS.external;
+}
+function softFor(c) {
+  if (c.standing) return SOFT.standing;
+  return SOFT[levelOf(c)] || SOFT.external;
+}
+function truncate(s, n) { return !s ? '' : (s.length <= n ? s : s.slice(0, n-1) + '…'); }
+
+// ---------- Build & layout ----------
+function buildGraph(parsedCourses) {
+  let list = parsedCourses.map(c => ({ ...c, meta: COURSE_META[c.code] || null }));
+  // Apply the active program view — drops courses that don't belong.
+  const view = VIEWS[state.view] || VIEWS.bs;
+  if (view.includeOnly) {
+    const allowed = new Set(view.includeOnly);
+    list = list.filter(c => allowed.has(c.code));
+  } else if (view.excludeIf) {
+    list = list.filter(c => !view.excludeIf(c));
+  }
+  const seen = new Set(list.map(c => c.code));
+  list.forEach(c => {
+    c.prereqs.forEach(p => {
+      if (!seen.has(p)) {
+        const parts = p.split(' ');
+        list.push({ code: p, prefix: parts[0], num: parseInt(parts[1], 10) || 0, title: 'External requirement', credits: '', description: '', prereqs: [], external: true, meta: null });
+        seen.add(p);
+      }
+    });
+  });
+
+  // Inject virtual standing nodes referenced via altPrereqs.
+  const standingUsage = new Map(); // standingCode -> [course codes that accept it]
+  list.forEach(c => {
+    (c.meta?.altPrereqs || []).forEach(stdCode => {
+      if (!STANDING_DEFS[stdCode]) return;
+      if (!standingUsage.has(stdCode)) standingUsage.set(stdCode, []);
+      standingUsage.get(stdCode).push(c.code);
+    });
+  });
+  standingUsage.forEach((_dependents, stdCode) => {
+    if (seen.has(stdCode)) return;
+    const def = STANDING_DEFS[stdCode];
+    list.push({
+      code: stdCode,
+      prefix: 'STD',
+      num: 999, // sort to the bottom of the Prerequisites column
+      title: def.title,
+      credits: '',
+      description: def.description,
+      prereqs: [],
+      external: true,   // place in the Prerequisites column
+      standing: true,   // amber styling + dashed alt edges
+      meta: null,
+    });
+    seen.add(stdCode);
+  });
+
+  const byCode = {}, parents = {}, childrenMap = {};
+  list.forEach(c => { byCode[c.code] = c; parents[c.code] = new Set(); childrenMap[c.code] = new Set(); });
+  list.forEach(c => c.prereqs.forEach(p => { if (byCode[p]) { parents[c.code].add(p); childrenMap[p].add(c.code); } }));
+  // Alt edges from standing nodes to their dependent courses.
+  standingUsage.forEach((dependents, stdCode) => {
+    dependents.forEach(courseCode => {
+      if (!byCode[courseCode]) return;
+      parents[courseCode].add(stdCode);
+      childrenMap[stdCode].add(courseCode);
+    });
+  });
+
+  // Column layout: one column per course level (plus external prereqs)
+  const colMap = {};
+  COL_ORDER.forEach(k => { colMap[k] = []; });
+  list.forEach(c => colMap[levelOf(c)].push(c));
+  // Sort each column by course number then code
+  Object.values(colMap).forEach(arr => arr.sort((a, b) => a.num - b.num || a.code.localeCompare(b.code)));
+
+  const cols = [];
+  let x = MX;
+  let maxBottom = MY;
+  COL_ORDER.forEach(key => {
+    const arr = colMap[key];
+    if (arr.length === 0) return;
+    const numSub = Math.ceil(arr.length / MAX_PER_SUBCOL);
+    arr.forEach((c, idx) => {
+      const subIdx = Math.floor(idx / MAX_PER_SUBCOL);
+      const rowIdx = idx % MAX_PER_SUBCOL;
+      c._cx = x + subIdx * (NW + SUBCOL_GAP) + NW/2;
+      c._cy = MY + rowIdx * (NH + GAP_Y) + NH/2;
+    });
+    const rowsInTallest = Math.min(arr.length, MAX_PER_SUBCOL);
+    const bottom = MY + rowsInTallest * (NH + GAP_Y) - GAP_Y;
+    const width = numSub * NW + (numSub - 1) * SUBCOL_GAP;
+    cols.push({ key, x, top: MY, bottom, count: arr.length, numSub, width });
+    maxBottom = Math.max(maxBottom, bottom);
+    x += width + GAP_X;
+  });
+
+  const nodes = list.map(c => ({ ...c, x: c._cx, y: c._cy, w: NW, h: NH }));
+  // Rebuild byCode to reference the laid-out node objects (with x/y/w/h)
+  const nodeByCode = {};
+  nodes.forEach(n => { nodeByCode[n.code] = n; });
+
+  const edges = [];
+  list.forEach(c => parents[c.code].forEach(p => {
+    const alt = !!(byCode[p]?.standing);
+    edges.push({ source: p, target: c.code, alt });
+  }));
+  // Accelerated BS→MS view: add the "cannot take both" pairs as red dashed
+  // non-prerequisite edges. Order picks the higher-numbered side as source
+  // so the edge bows in the same direction visually.
+  if (state.view === 'ms-accel') {
+    ACCEL_EXCLUSIONS.forEach(([a, b]) => {
+      if (!byCode[a] || !byCode[b]) return;
+      const src = byCode[a].num >= byCode[b].num ? a : b;
+      const dst = src === a ? b : a;
+      edges.push({ source: src, target: dst, exclusion: true });
+    });
+  }
+
+  state.courses = list; state.byCode = nodeByCode; state.parents = parents; state.children = childrenMap;
+  state.nodes = nodes; state.edges = edges; state.cols = cols;
+}
+
+// ---------- Render ----------
+const svg = d3.select('#canvas');
+const defs = svg.append('defs');
+const root = svg.append('g').attr('class', 'root');
+const colsLayer = root.append('g').attr('class', 'cols');
+const linksLayer = root.append('g').attr('class', 'links');
+const nodesLayer = root.append('g').attr('class', 'nodes');
+// Pills sit on top of everything so the "Take only one" warning is never
+// hidden behind a course card. Only used by the accelerated view.
+const exclLabelsLayer = root.append('g').attr('class', 'excl-labels');
+
+const zoom = d3.zoom().scaleExtent([0.25, 2.5]).on('zoom', (e) => root.attr('transform', e.transform));
+svg.call(zoom).on('dblclick.zoom', null);
+
+function setupMarkers() {
+  defs.selectAll('marker').remove();
+  const mk = (id, fill) => defs.append('marker')
+    .attr('id', id)
+    .attr('viewBox', '0 -5 10 10').attr('refX', 8).attr('refY', 0)
+    .attr('markerWidth', 5).attr('markerHeight', 5).attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', fill);
+  mk('arrow-default', '#94a3b8');
+  mk('arrow-active',  '#4f46e5');
+  mk('arrow-alt',     COLORS.standing);
+}
+setupMarkers();
+
+function pathFor(e) {
+  const s = state.byCode[e.source], t = state.byCode[e.target];
+  if (!s || !t) return '';
+  // Same column → bulge to the right
+  if (Math.abs(s.x - t.x) < 1) {
+    const sx = s.x, sy = s.y + s.h/2;
+    const tx = t.x, ty = t.y - t.h/2;
+    const off = s.w/2 + 36;
+    return `M ${sx},${sy} C ${sx + off},${sy + 10} ${tx + off},${ty - 10} ${tx},${ty}`;
+  }
+  // Cross-column → left-to-right S-curve
+  const sx = s.x + s.w/2, sy = s.y;
+  const tx = t.x - t.w/2, ty = t.y;
+  const mx = (sx + tx) / 2;
+  return `M ${sx},${sy} C ${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+}
+
+function render() {
+  const nonExternal = state.nodes.filter(n => !n.external);
+  document.getElementById('stat-courses').textContent = nonExternal.length;
+  document.getElementById('stat-edges').textContent = state.edges.length;
+  document.getElementById('stat-levels').textContent = new Set(nonExternal.map(n => levelOf(n))).size;
+
+  // Column backgrounds + headers
+  const colSel = colsLayer.selectAll('g.col').data(state.cols, d => d.key);
+  colSel.exit().remove();
+  const colEnter = colSel.enter().append('g').attr('class', 'col');
+  colEnter.append('rect').attr('class', 'col-band');
+  colEnter.append('line').attr('class', 'col-rule');
+  colEnter.append('text').attr('class', 'col-title');
+  colEnter.append('text').attr('class', 'col-count');
+  const allCols = colEnter.merge(colSel);
+
+  allCols.select('.col-band')
+    .attr('x', d => d.x - 18).attr('y', MY - 60)
+    .attr('width', d => d.width + 36)
+    .attr('height', d => (d.bottom - MY) + 80)
+    .attr('rx', 14).attr('ry', 14)
+    .attr('fill', '#ffffff')
+    .attr('stroke', 'none')
+    .attr('opacity', 1);
+
+  allCols.select('.col-rule')
+    .attr('x1', d => d.x).attr('x2', d => d.x + d.width)
+    .attr('y1', MY - 22).attr('y2', MY - 22)
+    .attr('stroke', d => COLORS[d.key]).attr('stroke-width', 2)
+    .attr('opacity', 0.6);
+
+  allCols.select('.col-title')
+    .attr('x', d => d.x).attr('y', MY - 36)
+    .attr('font-size', 13).attr('font-weight', 700)
+    .attr('fill', d => COLORS[d.key])
+    .attr('letter-spacing', '0.04em')
+    .text(d => LEVEL_LABELS[d.key]);
+
+  allCols.select('.col-count')
+    .attr('x', d => d.x + d.width).attr('y', MY - 36)
+    .attr('text-anchor', 'end')
+    .attr('font-size', 11).attr('font-weight', 600)
+    .attr('fill', '#94a3b8')
+    .text(d => `${d.count}`);
+
+  // Links
+  const linkSel = linksLayer.selectAll('g.link-group').data(state.edges, d => `${d.source}->${d.target}`);
+  linkSel.exit().remove();
+  const linkEnter = linkSel.enter().append('g').attr('class', 'link-group');
+  linkEnter.append('path').attr('class', 'link');
+  linkEnter.append('path').attr('class', 'link-flow');
+  const allLinks = linkEnter.merge(linkSel);
+  allLinks.select('path.link')
+    .attr('d', d => pathFor(d))
+    .attr('marker-end', d => {
+      if (d.exclusion) return null;
+      return d.alt ? 'url(#arrow-alt)' : 'url(#arrow-default)';
+    })
+    .attr('stroke', d => {
+      if (d.exclusion) return '#dc2626';
+      if (d.alt) return COLORS.standing;
+      return null;
+    })
+    .attr('stroke-dasharray', d => {
+      if (d.exclusion) return '5 4';
+      if (d.alt) return '6 4';
+      return null;
+    })
+    .attr('stroke-width', d => d.exclusion ? 1.8 : null);
+  allLinks.select('path.link-flow')
+    .attr('d', d => pathFor(d))
+    .attr('stroke', d => colorFor(state.byCode[d.target]));
+
+  // Nodes
+  const nodeSel = nodesLayer.selectAll('g.node').data(state.nodes, d => d.code);
+  nodeSel.exit().remove();
+  const nodeEnter = nodeSel.enter().append('g').attr('class', 'node');
+  nodeEnter.append('rect').attr('class', 'node-shadow');
+  nodeEnter.append('rect').attr('class', 'node-card');
+  nodeEnter.append('rect').attr('class', 'node-accent');
+  nodeEnter.append('text').attr('class', 'node-code');
+  nodeEnter.append('text').attr('class', 'node-title');
+  nodeEnter.append('rect').attr('class', 'credit-pill');
+  nodeEnter.append('text').attr('class', 'node-credits');
+  nodeEnter.append('text').attr('class', 'capstone-star');
+  nodeEnter.append('g').attr('class', 'cert-badges');
+  // Big red ✕ overlay — drawn on the focus target's exclusion partner so
+  // students see at a glance which course they can no longer take.
+  nodeEnter.append('path').attr('class', 'excl-cross');
+
+  const allNodes = nodeEnter.merge(nodeSel);
+  allNodes
+    .attr('transform', d => `translate(${d.x - d.w/2},${d.y - d.h/2})`)
+    .attr('data-code', d => d.code);
+
+  // Legacy offset shadow rect — kept in the DOM for backwards compatibility
+  // but rendered invisibly. The "lifted" effect now comes from a CSS
+  // drop-shadow filter on .node-card, which gives a soft blur instead of a
+  // hard offset rectangle that looked like a second border below each card.
+  allNodes.select('.node-shadow')
+    .attr('width', 0).attr('height', 0)
+    .attr('fill', 'none')
+    .attr('opacity', 0);
+
+  allNodes.select('.node-card')
+    .attr('width', d => d.w).attr('height', d => d.h)
+    .attr('rx', 10).attr('ry', 10)
+    .attr('fill', d => {
+      // Electives use a white fill so they look "outlined" — Required Core
+      // and Capstone stay filled with their soft level color, giving the
+      // chart a clear at-a-glance Core vs. Elective split.
+      if (!d.standing && !d.external && d.meta?.category === 'elective') return '#ffffff';
+      return softFor(d);
+    })
+    .attr('stroke', d => colorFor(d))
+    .attr('stroke-width', 2)
+    .attr('stroke-opacity', d => d.standing ? 1 : (d.external ? 0.55 : 1))
+    .attr('stroke-dasharray', d => {
+      if (d.standing) return null;       // standing → solid amber
+      if (d.external) return '4 4';      // MAT/STA/ECO → dashed gray
+      const cat = d.meta?.category;
+      if (cat === 'independent' || cat === 'topics') return '5 4';
+      return null;
+    });
+
+  // Inset, fully-rounded little stripe so it never pokes past the card's
+  // own rounded corners.
+  allNodes.select('.node-accent')
+    .attr('x', 6).attr('y', 12)
+    .attr('width', 3).attr('height', d => d.h - 24)
+    .attr('rx', 1.5).attr('ry', 1.5)
+    .attr('fill', d => colorFor(d))
+    .attr('opacity', d => d.standing ? 1 : (d.external ? 0.5 : 1));
+
+  allNodes.select('.node-code')
+    .attr('x', 18).attr('y', 27)
+    .attr('font-size', 16).attr('font-weight', 700)
+    .attr('fill', '#0f172a').attr('letter-spacing', '-0.01em')
+    .text(d => d.code);
+
+  allNodes.select('.node-title')
+    .attr('x', 18).attr('y', 47)
+    .attr('font-size', 11).attr('fill', '#334155')
+    .text(d => truncate(d.title, 28));
+
+  allNodes.select('.credit-pill')
+    .attr('x', d => d.w - 48).attr('y', 15)
+    .attr('width', 34).attr('height', 18)
+    .attr('rx', 9).attr('ry', 9)
+    .attr('fill', '#ffffff')
+    .attr('opacity', d => (d.external || !d.credits) ? 0 : 0.9);
+
+  allNodes.select('.node-credits')
+    .attr('x', d => d.w - 31).attr('y', 28)
+    .attr('font-size', 10.5).attr('font-weight', 700)
+    .attr('text-anchor', 'middle')
+    .attr('fill', d => colorFor(d))
+    .text(d => d.credits ? `${d.credits} cr` : '');
+
+  // Capstone ★ marker (CSC 402)
+  allNodes.select('.capstone-star')
+    .attr('x', d => d.w - 56).attr('y', 28)
+    .attr('font-size', 13).attr('text-anchor', 'middle')
+    .attr('fill', '#f59e0b')
+    .text(d => d.meta?.category === 'capstone' ? '★' : '');
+
+  // Build a quick lookup for accelerated-program exclusion partners. Only
+  // populated when the active view is ms-accel.
+  const exclPartner = new Map();
+  if (state.view === 'ms-accel') {
+    ACCEL_EXCLUSIONS.forEach(([a, b]) => {
+      if (state.byCode[a] && state.byCode[b]) {
+        exclPartner.set(a, b);
+        exclPartner.set(b, a);
+      }
+    });
+  }
+  // The cross-out path is the same shape on every card — set it once.
+  allNodes.select('.excl-cross')
+    .attr('d', d => `M 6 6 L ${d.w - 6} ${d.h - 6} M ${d.w - 6} 6 L 6 ${d.h - 6}`);
+
+  // Cert badges + (in Accelerated view) red "!" exclusion badge, bottom-right.
+  allNodes.select('.cert-badges').each(function(d) {
+    const g = d3.select(this);
+    g.selectAll('*').remove();
+    const badges = [];
+    (d.meta?.certs || []).forEach(cert => {
+      const info = CERT_INFO[cert];
+      if (info) badges.push({ color: info.color, label: info.initial, title: info.label });
+    });
+    if (exclPartner.has(d.code)) {
+      const partner = exclPartner.get(d.code);
+      badges.push({
+        color: '#dc2626',
+        label: '!',
+        title: `Cannot also take ${partner} — they fulfill the same requirement.`,
+      });
+    }
+    if (badges.length === 0) return;
+    const r = 7;
+    badges.forEach((b, i) => {
+      const cx = d.w - 13 - i * (2 * r + 3);
+      const cy = d.h - 12;
+      const sub = g.append('g').attr('transform', `translate(${cx},${cy})`);
+      sub.append('circle')
+        .attr('r', r)
+        .attr('fill', b.color)
+        .attr('stroke', '#ffffff')
+        .attr('stroke-width', 1.5);
+      sub.append('text')
+        .attr('text-anchor', 'middle').attr('dy', '0.32em')
+        .attr('font-size', 8.5).attr('font-weight', 700)
+        .attr('fill', '#ffffff').attr('pointer-events', 'none')
+        .text(b.label);
+      sub.append('title').text(b.title);
+    });
+  });
+
+  allNodes
+    .on('mouseenter', (event, d) => { if (hoverLocked) return; focusNode(d.code); })
+    .on('mouseleave', () => { if (!state.focusCode && !hoverLocked) clearFocus(); })
+    .on('click', (event, d) => {
+      event.stopPropagation();
+      dismissMobileHint();
+      state.focusCode = d.code;
+      lockHoverUntilMouseMoves();
+      focusNode(d.code);
+      // Mobile: first tap only highlights the chain; a second tap on the
+      // *same* course within 350ms opens the details bottom sheet.
+      if (isNarrow()) {
+        const now = Date.now();
+        const isDouble = mobileLastTap.code === d.code && (now - mobileLastTap.time) < 350;
+        if (!isDouble) {
+          mobileLastTap = { code: d.code, time: now };
+          return;
+        }
+        mobileLastTap = { code: null, time: 0 };
+      }
+      openDetails(d.code);
+      panTo(d.code);
+    });
+
+  // Clear any stale midpoint pills from a previous design — exclusions are
+  // now communicated via per-card red "!" badges (see cert-badges block).
+  exclLabelsLayer.selectAll('*').remove();
+
+  applyLevelFilter();
+}
+
+// ---------- Highlight ----------
+function reachable(start, map) {
+  const lit = new Set([start]);
+  const q = [start];
+  while (q.length) {
+    const cur = q.shift();
+    map[cur].forEach(n => { if (!lit.has(n)) { lit.add(n); q.push(n); } });
+  }
+  return lit;
+}
+let hoverLocked = false;
+let _hoverLockTimer = null;
+function lockHoverUntilMouseMoves() {
+  hoverLocked = true;
+  if (_hoverLockTimer) clearTimeout(_hoverLockTimer);
+  // Small delay so the synthetic mouseenter events fired while the chart pans under
+  // a stationary cursor don't immediately release the lock.
+  _hoverLockTimer = setTimeout(() => {
+    const release = () => { hoverLocked = false; window.removeEventListener('mousemove', release); };
+    window.addEventListener('mousemove', release, { once: true });
+  }, 60);
+}
+
+function exclusionPartnerOf(code) {
+  for (const [a, b] of ACCEL_EXCLUSIONS) {
+    if (a === code) return b;
+    if (b === code) return a;
+  }
+  return null;
+}
+function focusNode(code) {
+  const lit = new Set([...reachable(code, state.parents), ...reachable(code, state.children)]);
+  // Accelerated view: the focused course's exclusion partner stays lit (so
+  // students can compare side-by-side) and gets a red ✕ overlay.
+  let partner = null;
+  if (state.view === 'ms-accel') {
+    partner = exclusionPartnerOf(code);
+    if (partner && state.byCode[partner]) lit.add(partner);
+  }
+  d3.selectAll('.node')
+    .classed('dim', d => !lit.has(d.code))
+    .classed('focus', d => d.code === code)
+    .classed('related', d => lit.has(d.code) && d.code !== code)
+    .classed('excluded-by-focus', d => partner !== null && d.code === partner);
+  d3.selectAll('.link-group')
+    .classed('dim', d => d.exclusion ? false : !(lit.has(d.source) && lit.has(d.target)))
+    .classed('highlight', d => !d.exclusion && lit.has(d.source) && lit.has(d.target));
+  d3.selectAll('.link-group').select('path.link')
+    .attr('marker-end', d => {
+      if (d.exclusion) return null;
+      if (d.alt) return 'url(#arrow-alt)';
+      return (lit.has(d.source) && lit.has(d.target)) ? 'url(#arrow-active)' : 'url(#arrow-default)';
+    });
+}
+function clearFocus() {
+  state.focusCode = null;
+  if (activeCert !== null) {
+    activeCert = null;
+    document.querySelectorAll('#programs .legend-pill').forEach(p => {
+      p.classList.remove('active');
+      p.style.background = '';
+      p.style.borderColor = '';
+      p.style.color = '';
+    });
+  }
+  d3.selectAll('.node').classed('dim', false).classed('focus', false).classed('related', false).classed('excluded-by-focus', false);
+  d3.selectAll('.link-group').classed('dim', false).classed('highlight', false);
+  d3.selectAll('.link-group').select('path.link').attr('marker-end', d => d.exclusion ? null : (d.alt ? 'url(#arrow-alt)' : 'url(#arrow-default)'));
+}
+
+// ---------- Level filter ----------
+function applyLevelFilter() {
+  d3.selectAll('.node').style('display', d => state.activeLevels.has(levelOf(d)) ? null : 'none');
+  d3.selectAll('.link-group').style('display', d => {
+    const s = state.byCode[d.source], t = state.byCode[d.target];
+    return state.activeLevels.has(levelOf(s)) && state.activeLevels.has(levelOf(t)) ? null : 'none';
+  });
+}
+function buildLegend() {
+  // Only show pills for levels that actually appear in the current view's
+  // nodes — no point letting the user toggle 500/600 in the BS view, or 100
+  // in the MS view.
+  const allItems = [
+    { key: 100, label: '100 level', color: COLORS[100] },
+    { key: 200, label: '200 level', color: COLORS[200] },
+    { key: 300, label: '300 level', color: COLORS[300] },
+    { key: 400, label: '400 level', color: COLORS[400] },
+    { key: 500, label: '500 level', color: COLORS[500] },
+    { key: 600, label: '600 level', color: COLORS[600] },
+    { key: 'external', label: 'External', color: COLORS.external },
+  ];
+  const present = new Set(state.nodes.map(n => levelOf(n)));
+  const items = allItems.filter(it => present.has(it.key));
+  const el = document.getElementById('legend');
+  el.innerHTML = '';
+  items.forEach(it => {
+    const pill = document.createElement('span');
+    pill.className = 'legend-pill' + (state.activeLevels.has(it.key) ? '' : ' off');
+    pill.innerHTML = `<span class="legend-dot" style="background:${it.color}"></span>${it.label}`;
+    pill.onclick = () => {
+      if (state.activeLevels.has(it.key)) { state.activeLevels.delete(it.key); pill.classList.add('off'); }
+      else { state.activeLevels.add(it.key); pill.classList.remove('off'); }
+      applyLevelFilter();
+    };
+    el.appendChild(pill);
+  });
+}
+
+// ---------- Programs / certificates ----------
+let activeCert = null;
+function buildPrograms() {
+  const el = document.getElementById('programs');
+  el.innerHTML = '';
+  Object.entries(CERT_INFO).forEach(([key, info]) => {
+    const pill = document.createElement('span');
+    pill.className = 'legend-pill cert';
+    pill.dataset.cert = key;
+    pill.innerHTML = `<span class="legend-dot" style="background:${info.color}"></span>${info.label}`;
+    pill.onclick = () => toggleCertificate(key);
+    el.appendChild(pill);
+  });
+}
+function coursesInCert(key) {
+  const direct = new Set();
+  Object.entries(COURSE_META).forEach(([code, meta]) => {
+    if (meta.certs?.includes(key)) direct.add(code);
+  });
+  return direct;
+}
+function toggleCertificate(key) {
+  if (activeCert === key) {
+    activeCert = null;
+    document.querySelectorAll('#programs .legend-pill').forEach(p => {
+      p.classList.remove('active');
+      p.style.background = '';
+      p.style.borderColor = '';
+      p.style.color = '';
+    });
+    clearFocus();
+    return;
+  }
+  activeCert = key;
+  state.focusCode = null;
+  const info = CERT_INFO[key];
+  document.querySelectorAll('#programs .legend-pill').forEach(p => {
+    if (p.dataset.cert === key) {
+      p.classList.add('active');
+      p.style.background = info.color;
+      p.style.borderColor = info.color;
+      p.style.color = '#fff';
+    } else {
+      p.classList.remove('active');
+      p.style.background = '';
+      p.style.borderColor = '';
+      p.style.color = '';
+    }
+  });
+  // Light up direct courses + every prerequisite chain that leads to them
+  const direct = coursesInCert(key);
+  const lit = new Set();
+  direct.forEach(code => {
+    if (!state.byCode[code]) return;
+    reachable(code, state.parents).forEach(c => lit.add(c));
+  });
+  d3.selectAll('.node')
+    .classed('dim', d => !lit.has(d.code))
+    .classed('focus', false)
+    .classed('related', d => lit.has(d.code));
+  d3.selectAll('.link-group')
+    .classed('dim', d => !(lit.has(d.source) && lit.has(d.target)))
+    .classed('highlight', d => lit.has(d.source) && lit.has(d.target));
+  d3.selectAll('.link-group').select('path.link')
+    .attr('marker-end', d => {
+      if (d.exclusion) return null;
+      if (d.alt) return 'url(#arrow-alt)';
+      return (lit.has(d.source) && lit.has(d.target)) ? 'url(#arrow-active)' : 'url(#arrow-default)';
+    });
+}
+
+// ---------- Search ----------
+document.getElementById('search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) { clearFocus(); return; }
+  const matches = state.nodes.filter(n => n.code.toLowerCase().includes(q) || (n.title||'').toLowerCase().includes(q));
+  const lit = new Set(matches.map(m => m.code));
+  d3.selectAll('.node')
+    .classed('dim', d => !lit.has(d.code))
+    .classed('focus', false)
+    .classed('related', d => lit.has(d.code));
+  d3.selectAll('.link-group')
+    .classed('dim', d => !(lit.has(d.source) && lit.has(d.target)))
+    .classed('highlight', d => lit.has(d.source) && lit.has(d.target));
+});
+
+// ---------- Details ----------
+const app = document.getElementById('app');
+function openDetails(code) {
+  const c = state.byCode[code];
+  if (!c) return;
+  app.classList.add('right-open');
+  document.getElementById('details-code').textContent = c.code;
+  document.getElementById('details-title').textContent = c.title || '';
+  const badges = document.getElementById('details-badges');
+  badges.innerHTML = '';
+  const lvl = levelOf(c);
+  const lvlBadge = document.createElement('span');
+  lvlBadge.className = 'badge';
+  lvlBadge.textContent = c.standing ? 'Class Standing' : (c.external ? 'External' : `${lvl}-level`);
+  lvlBadge.style.color = colorFor(c);
+  lvlBadge.style.borderColor = colorFor(c) + '55';
+  lvlBadge.style.background = softFor(c);
+  badges.appendChild(lvlBadge);
+  if (c.credits) {
+    const b = document.createElement('span');
+    b.className = 'badge'; b.textContent = `${c.credits} credits`;
+    b.style.color = '#0f172a'; b.style.borderColor = 'var(--line-strong)'; b.style.background = '#fff';
+    badges.appendChild(b);
+  }
+  // Role badge from COURSE_META (Core / Capstone / Independent / Topics / Elective)
+  if (c.meta?.category && CATEGORY_INFO[c.meta.category]) {
+    const info = CATEGORY_INFO[c.meta.category];
+    const b = document.createElement('span');
+    b.className = 'badge';
+    b.textContent = (c.meta.category === 'capstone' ? '★ ' : '') + info.label;
+    b.style.color = '#0f172a'; b.style.borderColor = 'var(--line-strong)'; b.style.background = '#fff';
+    badges.appendChild(b);
+  }
+  // Certificate badges
+  (c.meta?.certs || []).forEach(cert => {
+    const info = CERT_INFO[cert];
+    if (!info) return;
+    const b = document.createElement('span');
+    b.className = 'badge';
+    b.textContent = info.label;
+    b.style.color = '#fff';
+    b.style.background = info.color;
+    b.style.borderColor = info.color;
+    b.style.cursor = 'pointer';
+    b.onclick = () => toggleCertificate(cert);
+    badges.appendChild(b);
+  });
+  document.getElementById('details-desc').textContent = c.description || (c.external ? 'External prerequisite course (not part of the CSC catalog).' : 'No description provided.');
+  // Optional accelerated-MS graduate equivalent (shown for either side of a pair).
+  const existing = document.getElementById('details-accel');
+  if (existing) existing.remove();
+  let accelPartner = c.meta?.accelGrad || null;
+  if (!accelPartner) {
+    // Derive partner from the exclusion list if this is the MS-side course.
+    const pair = ACCEL_EXCLUSIONS.find(([a, b]) => a === c.code || b === c.code);
+    if (pair) accelPartner = pair.find(x => x !== c.code);
+  }
+  if (accelPartner && state.byCode[accelPartner]) {
+    const partner = state.byCode[accelPartner];
+    const partnerLabel = `${partner.code}${partner.title ? ' · ' + partner.title : ''}`;
+    const direction = (c.num >= 500)
+      ? `May substitute for <b>${accelPartner}</b> in the BS curriculum.`
+      : `Substitutable with <b>${accelPartner}</b> in the MS curriculum.`;
+    const wrap = document.createElement('div');
+    wrap.id = 'details-accel';
+    wrap.className = 'details-section';
+    wrap.innerHTML = `<h4>Accelerated BS → MS</h4>
+      <div class="details-accel-body">
+        <div>${direction}</div>
+        <div class="details-accel-warn">⚠︎ Cannot take both <b>${c.code}</b> and <b>${accelPartner}</b> — they count as the same requirement.</div>
+        <span class="prereq-chip" data-jump="${accelPartner}">${partnerLabel}</span>
+      </div>`;
+    document.getElementById('details-desc').after(wrap);
+    const jumpChip = wrap.querySelector('.prereq-chip');
+    if (jumpChip) {
+      jumpChip.style.cursor = 'pointer';
+      jumpChip.onclick = () => {
+        state.focusCode = accelPartner;
+        lockHoverUntilMouseMoves();
+        focusNode(accelPartner);
+        openDetails(accelPartner);
+        panTo(accelPartner);
+      };
+    }
+  }
+
+  const prereqList = document.getElementById('prereq-list');
+  prereqList.innerHTML = '';
+  // Drop any earlier-rendered prereq note before re-adding.
+  const oldNote = document.getElementById('details-prereq-note');
+  if (oldNote) oldNote.remove();
+  // Filter out standing nodes — they render below as "OR" chips instead.
+  const ps = [...state.parents[c.code]].filter(p => !state.byCode[p]?.standing);
+  const note = c.meta?.prereqNote;
+  if (ps.length === 0) {
+    const chip = document.createElement('span'); chip.className = 'prereq-chip empty';
+    chip.textContent = note
+      ? note
+      : (c.standing ? 'None — automatic at 60 earned credits' : 'None — foundational course');
+    prereqList.appendChild(chip);
+  } else {
+    ps.forEach(p => {
+      const chip = document.createElement('span'); chip.className = 'prereq-chip'; chip.textContent = p;
+      chip.onclick = () => { state.focusCode = p; lockHoverUntilMouseMoves(); focusNode(p); openDetails(p); panTo(p); };
+      prereqList.appendChild(chip);
+    });
+  }
+  // Free-text prereq notes (e.g. "any three CSC/CST/CSW courses" for CSC 301).
+  // Rendered below the chip list so it never gets confused with course nodes.
+  if (note && ps.length > 0) {
+    const n = document.createElement('div');
+    n.id = 'details-prereq-note';
+    n.className = 'details-prereq-note';
+    n.textContent = note;
+    prereqList.after(n);
+  }
+
+  // "OR alt-prereqs" — non-course escape hatches like Junior standing.
+  // Each alt chip is clickable to jump to its virtual node.
+  const altExisting = document.getElementById('details-alts');
+  if (altExisting) altExisting.remove();
+  const altCodes = c.meta?.altPrereqs || [];
+  if (altCodes.length > 0) {
+    const wrap = document.createElement('div');
+    wrap.id = 'details-alts';
+    wrap.className = 'details-alts';
+    const label = document.createElement('span');
+    label.className = 'details-alts-label';
+    label.textContent = 'OR';
+    wrap.appendChild(label);
+    altCodes.forEach(stdCode => {
+      const def = STANDING_DEFS[stdCode];
+      const chip = document.createElement('span');
+      chip.className = 'prereq-chip alt';
+      chip.textContent = `${stdCode} standing (≥60 cr)`;
+      if (state.byCode[stdCode]) {
+        chip.style.cursor = 'pointer';
+        chip.onclick = () => {
+          state.focusCode = stdCode;
+          lockHoverUntilMouseMoves();
+          focusNode(stdCode);
+          openDetails(stdCode);
+          panTo(stdCode);
+        };
+      }
+      wrap.appendChild(chip);
+    });
+    prereqList.after(wrap);
+  }
+
+  const unlocksList = document.getElementById('unlocks-list');
+  unlocksList.innerHTML = '';
+  const cs = [...state.children[c.code]];
+  if (cs.length === 0) {
+    const chip = document.createElement('span'); chip.className = 'prereq-chip empty'; chip.textContent = 'None'; unlocksList.appendChild(chip);
+  } else {
+    cs.forEach(p => {
+      const chip = document.createElement('span'); chip.className = 'prereq-chip'; chip.textContent = p;
+      chip.onclick = () => { state.focusCode = p; lockHoverUntilMouseMoves(); focusNode(p); openDetails(p); panTo(p); };
+      unlocksList.appendChild(chip);
+    });
+  }
+}
+function isNarrow() { return window.matchMedia('(max-width: 768px)').matches; }
+
+// Track last tap on mobile so we can differentiate single-tap (highlight only)
+// from double-tap (open details bottom sheet).
+let mobileLastTap = { code: null, time: 0 };
+
+// First-run hint that explains the tap / double-tap / drag pattern.
+const mobileHintEl = document.getElementById('mobile-hint');
+let _mobileHintTimer = null;
+function showMobileHint() {
+  if (!isNarrow()) return;
+  if (sessionStorage.getItem('mobileHintDismissed') === '1') return;
+  mobileHintEl.classList.add('show');
+  if (_mobileHintTimer) clearTimeout(_mobileHintTimer);
+  _mobileHintTimer = setTimeout(dismissMobileHint, 6000);
+}
+function dismissMobileHint() {
+  if (!mobileHintEl.classList.contains('show')) return;
+  mobileHintEl.classList.remove('show');
+  try { sessionStorage.setItem('mobileHintDismissed', '1'); } catch (_) {}
+  if (_mobileHintTimer) { clearTimeout(_mobileHintTimer); _mobileHintTimer = null; }
+}
+mobileHintEl.addEventListener('click', dismissMobileHint);
+// Reveal it after the chart's entrance settles.
+setTimeout(showMobileHint, 700);
+document.getElementById('details-close').onclick = () => {
+  app.classList.remove('right-open');
+  clearFocus();
+  // On mobile the canvas size doesn't change when the bottom sheet hides,
+  // so skip the re-fit that we do on desktop.
+  if (!isNarrow()) setTimeout(fitToView, 260);
+};
+
+// ---------- View controls ----------
+const wrapEl = document.getElementById('canvas-wrap');
+function viewSize() {
+  const r = wrapEl.getBoundingClientRect();
+  return { w: r.width, h: r.height };
+}
+function bbox() {
+  if (state.nodes.length === 0) return null;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const n of state.nodes) {
+    minX = Math.min(minX, n.x - n.w/2);
+    maxX = Math.max(maxX, n.x + n.w/2);
+    minY = Math.min(minY, n.y - n.h/2);
+    maxY = Math.max(maxY, n.y + n.h/2);
+  }
+  return { minX, maxX, minY, maxY, w: maxX - minX, h: maxY - minY };
+}
+function fitToView(animate = true) {
+  const b = bbox(); if (!b) return;
+  const { w: vw, h: vh } = viewSize();
+  if (vw < 50 || vh < 50) return;
+  const narrow = vw <= 768;
+  const pad = narrow ? 24 : 60;
+  const sw = vw - 2*pad, sh = vh - 2*pad;
+  // On phones the chart is much wider than the screen — clamp to a
+  // floor so cards stay readable; users can pan horizontally.
+  const minScale = narrow ? 0.42 : 0.2;
+  const idealScale = Math.min(sw / b.w, sh / b.h, 1.4);
+  const scale = Math.max(minScale, idealScale);
+  // Always center the chart in the viewport.
+  const tx = vw/2 - (b.minX + b.w/2) * scale;
+  const ty = vh/2 - (b.minY + b.h/2) * scale;
+  const t = d3.zoomIdentity.translate(tx, ty).scale(scale);
+  if (animate) svg.transition().duration(550).ease(d3.easeCubicOut).call(zoom.transform, t);
+  else svg.call(zoom.transform, t);
+}
+function panTo(code) {
+  const n = state.byCode[code]; if (!n) return;
+  const { w: vw, h: vh } = viewSize();
+  const cur = d3.zoomTransform(svg.node());
+  const scale = Math.max(cur.k, 0.85);
+  const tx = vw/2 - n.x * scale;
+  const ty = vh/2 - n.y * scale;
+  svg.transition().duration(500).ease(d3.easeCubicOut).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+}
+document.getElementById('btn-fit').onclick = () => fitToView();
+document.getElementById('btn-zoom-in').onclick = () => svg.transition().duration(200).call(zoom.scaleBy, 1.3);
+document.getElementById('btn-zoom-out').onclick = () => svg.transition().duration(200).call(zoom.scaleBy, 1/1.3);
+document.getElementById('btn-recenter').onclick = () => fitToView();
+
+svg.on('click', (event) => {
+  if (event.target === svg.node()) { state.focusCode = null; clearFocus(); }
+});
+document.getElementById('left-toggle').onclick = () => {
+  app.classList.toggle('left-collapsed');
+  if (!isNarrow()) setTimeout(fitToView, 260);
+};
+document.getElementById('backdrop').onclick = () => app.classList.add('left-collapsed');
+
+// Legend — two display modes:
+//   • Pinned: small, draggable floating card. Auto-shown on wide desktops.
+//   • Modal:  full-screen overlay. Used on narrower viewports when the user
+//             explicitly taps the ? button.
+const legendModal = document.getElementById('legend-modal');
+const legendCard  = document.getElementById('legend-card');
+const legendDrag  = document.getElementById('legend-drag');
+
+const wideMQ = window.matchMedia('(min-width: 1280px)');
+const isWide = () => wideMQ.matches;
+
+function openLegend() {
+  if (isWide()) {
+    legendModal.classList.add('pinned', 'show');
+  } else {
+    legendModal.classList.remove('pinned');
+    legendModal.classList.add('show');
+    // Reset any inline position left over from a previous pinned session
+    legendCard.style.left = legendCard.style.top = legendCard.style.right = legendCard.style.bottom = '';
+  }
+}
+function closeLegend() {
+  legendModal.classList.remove('show');
+  try { sessionStorage.setItem('legendDismissed', '1'); } catch (_) {}
+}
+document.getElementById('btn-legend').onclick = openLegend;
+document.getElementById('legend-close').onclick = closeLegend;
+legendModal.addEventListener('click', (e) => {
+  // Only the modal-overlay (non-pinned) closes on backdrop click.
+  if (legendModal.classList.contains('pinned')) return;
+  if (e.target === legendModal) closeLegend();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (legendModal.classList.contains('show')) { closeLegend(); return; }
+    if (app.classList.contains('right-open')) { app.classList.remove('right-open'); clearFocus(); }
+  }
+});
+
+// Drag-to-reposition for pinned mode (pointer events → works for mouse + touch).
+let _legendDrag = null;
+legendDrag.addEventListener('pointerdown', (e) => {
+  if (!legendModal.classList.contains('pinned')) return;
+  if (e.target.closest('.close-btn')) return;
+  const rect = legendCard.getBoundingClientRect();
+  _legendDrag = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, pid: e.pointerId };
+  legendDrag.setPointerCapture(e.pointerId);
+  legendCard.classList.add('dragging');
+  // Switch from right/bottom anchors to left/top so we can drive position
+  // with absolute pixel values.
+  legendCard.style.left = rect.left + 'px';
+  legendCard.style.top  = rect.top  + 'px';
+  legendCard.style.right = 'auto';
+  legendCard.style.bottom = 'auto';
+});
+legendDrag.addEventListener('pointermove', (e) => {
+  if (!_legendDrag) return;
+  const pad = 8;
+  const maxX = window.innerWidth  - legendCard.offsetWidth  - pad;
+  const maxY = window.innerHeight - legendCard.offsetHeight - pad;
+  const x = Math.max(pad, Math.min(maxX, e.clientX - _legendDrag.dx));
+  const y = Math.max(pad, Math.min(maxY, e.clientY - _legendDrag.dy));
+  legendCard.style.left = x + 'px';
+  legendCard.style.top  = y + 'px';
+});
+function _endLegendDrag(e) {
+  if (!_legendDrag) return;
+  try { legendDrag.releasePointerCapture(_legendDrag.pid); } catch (_) {}
+  _legendDrag = null;
+  legendCard.classList.remove('dragging');
+}
+legendDrag.addEventListener('pointerup',   _endLegendDrag);
+legendDrag.addEventListener('pointercancel', _endLegendDrag);
+
+// Auto-show as pinned on wide desktops (first session only).
+function maybeAutoShowLegend() {
+  if (!isWide()) return;
+  if (sessionStorage.getItem('legendDismissed') === '1') return;
+  legendModal.classList.add('pinned', 'show');
+}
+setTimeout(maybeAutoShowLegend, 900);
+
+// When the viewport crosses the wide breakpoint, swap modes (or hide).
+wideMQ.addEventListener('change', () => {
+  if (!legendModal.classList.contains('show')) return;
+  if (isWide()) {
+    // upgrade modal → pinned at default corner
+    legendModal.classList.add('pinned');
+    legendCard.style.left = legendCard.style.top = '';
+    legendCard.style.right = legendCard.style.bottom = '';
+  } else {
+    // pinned → hide; user can re-open via ?
+    legendModal.classList.remove('pinned', 'show');
+  }
+});
+
+// Default the sidebar to closed on phones; expanded on desktop.
+if (isNarrow()) app.classList.add('left-collapsed');
+// React to viewport changes (rotation / desktop ↔ mobile dragging)
+window.matchMedia('(max-width: 768px)').addEventListener('change', (e) => {
+  if (e.matches) {
+    app.classList.add('left-collapsed');
+    app.classList.remove('right-open');
+  } else {
+    app.classList.remove('left-collapsed');
+  }
+  setTimeout(() => fitToView(false), 80);
+});
+
+const toastEl = document.getElementById('toast');
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+// Catalog is hard-coded in this file (DEFAULT_CATALOG). To update it, edit
+// the string in this file and redeploy.
+
+// ---------- Program view routing ----------
+function viewFromHash() {
+  const h = (location.hash || '').toLowerCase();
+  if (h === '#/minor/cs')       return 'minor-cs';
+  if (h === '#/minor/it')       return 'minor-it';
+  if (h === '#/ms')             return 'ms';
+  if (h === '#/ms/accelerated') return 'ms-accel';
+  return 'bs';
+}
+function applyView(v, { animate = true } = {}) {
+  const view = VIEWS[v] || VIEWS.bs;
+  state.view = view.key;
+  state.focusCode = null;
+  document.querySelectorAll('#view-tabs .view-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view.key);
+  });
+  document.getElementById('view-title').textContent = view.title;
+  document.getElementById('view-subtitle').textContent = view.subtitle;
+  // The Programs (certificates) section is only meaningful in the BS view.
+  const progSection = document.getElementById('programs')?.parentElement;
+  if (progSection) progSection.style.display = (view.key === 'bs') ? '' : 'none';
+  // Render program-rules block (currently only MS and Accelerated have rules).
+  const rulesSection = document.getElementById('rules-section');
+  const rulesList = document.getElementById('rules-list');
+  if (rulesSection && rulesList) {
+    if (Array.isArray(view.rules) && view.rules.length) {
+      rulesSection.hidden = false;
+      rulesList.innerHTML = view.rules.map(r => `<li>${r}</li>`).join('');
+    } else {
+      rulesSection.hidden = true;
+      rulesList.innerHTML = '';
+    }
+  }
+  // Rebuild the graph against the active view.
+  const text = (typeof window.__lastCatalog === 'string' && window.__lastCatalog) || DEFAULT_CATALOG;
+  const parsed = parseCatalog(text);
+  buildGraph(parsed);
+  render();
+  // Refresh the level pills so we only expose levels that appear in this view.
+  buildLegend();
+  fitToView(animate);
+}
+window.addEventListener('hashchange', () => applyView(viewFromHash()));
+
+// ---------- Initial load ----------
+buildLegend();
+buildPrograms();
+// Seed the view from the URL hash and paint the chart from the catalog
+// baked into this file.
+state.view = viewFromHash();
+window.__lastCatalog = DEFAULT_CATALOG;
+applyView(state.view, { animate: false });
+
+// Robust initial fit: wait until canvas-wrap has real dimensions, then fit
+let didFit = false;
+function tryFit() {
+  if (didFit) return;
+  const { w, h } = viewSize();
+  if (w > 100 && h > 100) {
+    didFit = true;
+    fitToView(false);
+  }
+}
+const ro = new ResizeObserver(() => tryFit());
+ro.observe(wrapEl);
+requestAnimationFrame(tryFit);
+setTimeout(tryFit, 50);
+setTimeout(tryFit, 200);
+
+window.addEventListener('resize', () => fitToView(false));
+</script>
+</body>
+</html>

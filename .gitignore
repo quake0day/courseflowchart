@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+.dev.vars
+.DS_Store
+
+# The raw catalog dump used during early development — already embedded in public/index.html
+CSC Undergraduate
