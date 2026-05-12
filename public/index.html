@@ -564,7 +564,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
           <h3 class="legend-h3">Interaction</h3>
           <ul class="legend-tips">
             <li><b>Desktop:</b> hover a course to preview its chain, click to open the details panel.</li>
-            <li><b>Mobile:</b> single-tap a course to trace its prerequisite chain, <b>double-tap</b> the same course to open its details.</li>
+            <li><b>Mobile / iPad:</b> single-tap a course to trace its prerequisite chain, <b>double-tap</b> the same course to open its details.</li>
             <li>Tap a certificate (Cybersecurity / Cloud) to highlight every course on that path.</li>
             <li>Switch programs from the sidebar — <b>BS in CS</b>, <b>Minor · CS</b>, or <b>Minor · IT</b> — each shows only its required courses.</li>
             <li>Drag empty space to pan; pinch or scroll to zoom.</li>
@@ -1540,9 +1540,9 @@ function render() {
       state.focusCode = d.code;
       lockHoverUntilMouseMoves();
       focusNode(d.code);
-      // Mobile: first tap only highlights the chain; a second tap on the
-      // *same* course within 350ms opens the details bottom sheet.
-      if (isNarrow()) {
+      // Touch devices (phones + iPads): first tap only highlights the chain;
+      // a second tap on the *same* course within 350ms opens the details panel.
+      if (isTapDevice()) {
         const now = Date.now();
         const isDouble = mobileLastTap.code === d.code && (now - mobileLastTap.time) < 350;
         if (!isDouble) {
@@ -1930,6 +1930,11 @@ function openDetails(code) {
   }
 }
 function isNarrow() { return window.matchMedia('(max-width: 768px)').matches; }
+// Touch-class devices (phones, iPads): primary pointer is coarse OR we lack
+// hover. Used to switch course taps to single-tap-trace / double-tap-details.
+function isTapDevice() {
+  return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
 
 // Track last tap on mobile so we can differentiate single-tap (highlight only)
 // from double-tap (open details bottom sheet).
@@ -1939,7 +1944,7 @@ let mobileLastTap = { code: null, time: 0 };
 const mobileHintEl = document.getElementById('mobile-hint');
 let _mobileHintTimer = null;
 function showMobileHint() {
-  if (!isNarrow()) return;
+  if (!isTapDevice()) return;
   if (sessionStorage.getItem('mobileHintDismissed') === '1') return;
   mobileHintEl.classList.add('show');
   if (_mobileHintTimer) clearTimeout(_mobileHintTimer);
