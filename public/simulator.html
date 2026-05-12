@@ -534,6 +534,42 @@ function planPathTo(targetCode) {
 }
 
 // =========================================================================
+// WCU offering defaults — sourced from the official Fall 2025 CSC Student
+// Handbook (https://health-sciences.wcupa.edu/.../CSC%20Handbook%20UGRD%20Fall%202025.pdf,
+// page 16 "CSC Course Rotation").
+// =========================================================================
+const WCU_OFFERING_PRESET = {
+  // "Every Semester" — listed explicitly in the handbook
+  'CSC 141': { fall: true, spring: true },  'CSC 142': { fall: true, spring: true },
+  'CSC 220': { fall: true, spring: true },  'CSC 231': { fall: true, spring: true },
+  'CSC 240': { fall: true, spring: true },  'CSC 241': { fall: true, spring: true },
+  'CSC 301': { fall: true, spring: true },  'CSC 345': { fall: true, spring: true },
+  'CSC 402': { fall: true, spring: true },  'CSC 400': { fall: true, spring: true },
+  'CSC 302': { fall: true, spring: true },  'CSC 317': { fall: true, spring: true },
+  'CSC 321': { fall: true, spring: true },  'CSC 335': { fall: true, spring: true },
+  // "Every Fall" — Cloud Engineering / Computer Security cert
+  'CSC 331': { fall: true,  spring: false },
+  'CSC 472': { fall: true,  spring: false },
+  'CSC 478': { fall: true,  spring: false },
+  // "Every Spring"
+  'CSC 471': { fall: false, spring: true },
+  'CSC 468': { fall: false, spring: true },
+  // 400-level upper-level electives — handbook says "at least two each
+  // semester, up to eight in total"; individual courses rotate. Mark them
+  // Both as an optimistic baseline; users can tighten per course.
+  'CSC 381': { fall: true, spring: true },  'CSC 382': { fall: true, spring: true },
+  'CSC 404': { fall: true, spring: true },  'CSC 416': { fall: true, spring: true },
+  'CSC 417': { fall: true, spring: true },  'CSC 418': { fall: true, spring: true },
+  'CSC 461': { fall: true, spring: true },  'CSC 466': { fall: true, spring: true },
+  'CSC 467': { fall: true, spring: true },  'CSC 476': { fall: true, spring: true },
+  'CSC 481': { fall: true, spring: true },
+  // Independent / Topics — arranged per term, treat as Both
+  'CSC 490': { fall: true, spring: true },  'CSC 495': { fall: true, spring: true },
+  'CSC 496': { fall: true, spring: true },  'CSC 497': { fall: true, spring: true },
+  'CSC 499': { fall: true, spring: true },
+};
+
+// =========================================================================
 // UI
 // =========================================================================
 const targetSelect = document.getElementById('target');
@@ -666,10 +702,13 @@ function renderOfferings() {
   const tools = document.createElement('div'); tools.className = 'offerings-toolbar';
   const search = document.createElement('input'); search.className = 'search-input'; search.placeholder = 'Search by code or title…'; search.value = state.offeringsFilter;
   search.oninput = () => { state.offeringsFilter = search.value; rebuild(); };
+  const loadWcu = document.createElement('button'); loadWcu.className = 'btn'; loadWcu.textContent = 'Load WCU defaults';
+  loadWcu.title = 'Apply the official Fall 2025 CSC Handbook course rotation';
+  loadWcu.onclick = () => { state.offerings = JSON.parse(JSON.stringify(WCU_OFFERING_PRESET)); saveState(); rebuild(); };
   const reset = document.createElement('button'); reset.className = 'btn'; reset.textContent = 'Reset all to Both';
   reset.onclick = () => { state.offerings = {}; saveState(); rebuild(); };
   const count = document.createElement('span'); count.style.fontSize = '12px'; count.style.color = 'var(--muted)'; count.style.marginLeft = 'auto';
-  tools.appendChild(search); tools.appendChild(reset); tools.appendChild(count);
+  tools.appendChild(search); tools.appendChild(loadWcu); tools.appendChild(reset); tools.appendChild(count);
 
   const list = document.createElement('div'); list.className = 'offerings-list';
   function rebuild() {
