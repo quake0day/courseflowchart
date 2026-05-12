@@ -168,18 +168,64 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 }
 .crit-flow .crit-arrow { color: var(--muted); font-size: 13px; }
 
-/* ---- Mobile ---- */
+/* ---- Mobile / iPad portrait: sidebar becomes a slide-in drawer ---- */
+.menu-btn, .backdrop { display: none; }
 @media (max-width: 880px) {
-  body { grid-template-columns: 1fr; }
-  aside.sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
-  .content { padding: 16px; }
+  body { display: block; }
+  aside.sidebar {
+    position: fixed; top: 0; left: 0; height: 100dvh;
+    width: 340px; max-width: 88vw;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    z-index: 40;
+    box-shadow: var(--shadow-lg);
+    border-right: 1px solid var(--line); border-bottom: 0;
+    overflow-y: auto;
+  }
+  body.drawer-open aside.sidebar { transform: translateX(0); }
+  .backdrop {
+    display: block; position: fixed; inset: 0; background: rgba(15,23,42,0);
+    z-index: 30; pointer-events: none;
+    transition: background .22s ease;
+  }
+  body.drawer-open .backdrop { background: rgba(15,23,42,0.32); pointer-events: auto; }
+  main { display: flex; flex-direction: column; min-height: 100dvh; }
+  .topbar { padding: 10px 14px; gap: 10px; row-gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .menu-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--panel); border: 1px solid var(--line-strong);
+    padding: 7px 11px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; color: var(--text);
+  }
+  .menu-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .menu-btn svg { width: 14px; height: 14px; }
+  .share-btn { padding: 6px 9px; font-size: 12px; }
+  .share-btn span { display: none; }   /* icon only on narrow */
+  .summary { margin-left: 0; gap: 6px; }
+  .chip { font-size: 11.5px; padding: 4px 9px; }
+  .content { padding: 14px; overflow-x: hidden; }
+  .plan-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .term-card { padding: 13px 14px; min-width: 0; }
+  .term-card .course-row { min-width: 0; }
+  .term-card .course-title { min-width: 0; }
+  .bn-row { flex-wrap: wrap; }
+  .bn-row .bn-msg { flex: 1 1 100%; min-width: 0; }
+  html, body { overflow-x: hidden; }
   .off-row { grid-template-columns: 70px 1fr; }
   .off-row .off-title { display: none; }
   .off-row .seg { grid-column: 1 / -1; justify-self: end; }
+  .target-chip { font-size: 11.5px; padding: 3px 4px 3px 9px; }
+  .target-chip button { width: 16px; height: 16px; font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .crit-flow .crit-pill { font-size: 11.5px; padding: 4px 8px; }
+  .crit-flow .crit-arrow { font-size: 11px; }
 }
 </style>
 </head>
 <body>
+
+<div class="backdrop" id="backdrop"></div>
 
 <aside class="sidebar">
   <div class="sidebar-header">
@@ -239,6 +285,10 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 
 <main>
   <div class="topbar">
+    <button class="menu-btn" id="menuBtn" title="Open setup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Setup
+    </button>
     <div class="tabs" role="tablist">
       <button class="tab active" data-tab="plan">Plan</button>
       <button class="tab" data-tab="offerings">Offerings</button>
@@ -246,7 +296,7 @@ main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
     <div class="summary" id="summary"></div>
     <button class="share-btn" id="shareBtn" title="Copy a link that reproduces this exact simulation">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
-      Copy link
+      <span>Copy link</span>
     </button>
   </div>
   <div class="content" id="content">
@@ -1075,6 +1125,14 @@ function pickInitialTargetIfEmpty() {
   if (state.courses.length) state.targets = [state.courses[0].code];
 }
 
+function isNarrow() { return window.matchMedia('(max-width: 880px)').matches; }
+function openDrawer()  { document.body.classList.add('drawer-open'); }
+function closeDrawer() { document.body.classList.remove('drawer-open'); }
+function toggleDrawer() {
+  if (document.body.classList.contains('drawer-open')) closeDrawer();
+  else openDrawer();
+}
+
 function init() {
   restoreState();
   // URL hash overrides localStorage so shared links reproduce exactly.
@@ -1106,11 +1164,18 @@ function init() {
     }
     presetSelect.value = '';
     saveState(); renderTargets(); renderAll();
+    if (isNarrow()) closeDrawer();
   };
-  runBtn.onclick = () => renderAll();
+  runBtn.onclick = () => { renderAll(); if (isNarrow()) closeDrawer(); };
   completedSearch.oninput = () => { state.completedFilter = completedSearch.value; renderCompletedList(); };
   clearCompletedBtn.onclick = () => { state.completed.clear(); saveState(); renderCompletedList(); if (state.tab === 'plan') renderPlan(); };
   document.getElementById('shareBtn').onclick = (e) => copyShareLink(e.currentTarget);
+  document.getElementById('menuBtn').onclick = toggleDrawer;
+  document.getElementById('backdrop').onclick = closeDrawer;
+  // Esc closes the drawer on mobile.
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+  // Reset drawer state on resize back to desktop.
+  window.addEventListener('resize', () => { if (!isNarrow()) closeDrawer(); });
   // Reload state if user navigates with browser back/forward to a different hash.
   window.addEventListener('hashchange', () => {
     applyHashToState();
