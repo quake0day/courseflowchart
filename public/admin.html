@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CSC Flowchart · Admin</title>
+<style>
+:root {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --panel-soft: #f1f3f8;
+  --line: #e5e8ef;
+  --line-strong: #d4d8e2;
+  --text: #0f172a;
+  --text-soft: #475569;
+  --muted: #94a3b8;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --ok: #059669;
+  --ok-soft: #d1fae5;
+  --err: #dc2626;
+  --err-soft: #fee2e2;
+  --warn: #d97706;
+  --warn-soft: #fef3c7;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+  --shadow-md: 0 4px 14px rgba(15,23,42,0.06), 0 1px 3px rgba(15,23,42,0.04);
+  --shadow-lg: 0 12px 28px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.05);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { padding: 0; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; }
+
+/* ---- Shell ---- */
+.app-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.app-bar-left { display: flex; align-items: center; gap: 14px; }
+.brand-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent); border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+
+.userbar { display: inline-flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-soft); }
+.userbar .who { color: var(--text); font-weight: 600; }
+.userbar a, .userbar button { color: var(--text-soft); border: 1px solid var(--line); background: var(--panel); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12.5px; text-decoration: none; }
+.userbar a:hover, .userbar button:hover { background: var(--panel-soft); color: var(--text); }
+
+/* ---- Login ---- */
+.login-wrap { min-height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+.login-card { width: 360px; max-width: 95vw; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-md); padding: 28px 28px 24px; }
+.login-card h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.02em; }
+.login-card .sub { font-size: 13px; color: var(--text-soft); margin: 0 0 22px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
+.field input { width: 100%; padding: 10px 12px; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 10px; font-size: 14px; outline: none; font-family: inherit; color: var(--text); transition: border-color .15s, box-shadow .15s; }
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background: var(--panel); }
+.login-card .btn-primary { width: 100%; }
+.login-error { font-size: 13px; color: var(--err); background: var(--err-soft); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #4338ca; color: #fff; }
+.btn.danger { color: var(--err); border-color: rgba(220,38,38,0.35); }
+.btn.danger:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
+.btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- Workspace ---- */
+.workspace { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; padding: 16px; min-height: calc(100vh - 60px); }
+@media (max-width: 980px) { .workspace { grid-template-columns: 1fr; } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.panel-head { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-head h2 { font-size: 14px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.panel-head .sub { font-size: 12px; color: var(--muted); }
+.panel-body { padding: 14px 18px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+/* Catalog editor */
+.cat-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.cat-stats { font-size: 12px; color: var(--text-soft); display: flex; gap: 14px; margin-left: auto; }
+.cat-stats b { color: var(--text); font-weight: 600; }
+.cat-textarea { flex: 1; min-height: 280px; width: 100%; resize: none; background: var(--panel-soft); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.55; outline: none; transition: border-color .15s, box-shadow .15s; }
+.cat-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background: var(--panel); }
+.cat-status { margin-top: 10px; font-size: 12.5px; padding: 6px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
+.cat-status.idle { color: var(--muted); }
+.cat-status.dirty { color: var(--warn); background: var(--warn-soft); }
+.cat-status.ok { color: var(--ok); background: var(--ok-soft); }
+.cat-status.err { color: var(--err); background: var(--err-soft); }
+.cat-status.busy { color: var(--text-soft); background: var(--panel-soft); }
+.spinner { width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Chat */
+.chat-stream { flex: 1; overflow-y: auto; padding: 4px 4px 8px; display: flex; flex-direction: column; gap: 10px; min-height: 240px; }
+.chat-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 32px 18px; line-height: 1.6; }
+.chat-empty .ex { display: inline-block; background: var(--panel-soft); border: 1px solid var(--line); padding: 6px 10px; border-radius: 8px; margin: 4px 4px 0; cursor: pointer; color: var(--text); }
+.chat-empty .ex:hover { border-color: var(--accent); color: var(--accent); }
+.msg { padding: 10px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.55; max-width: 92%; white-space: pre-wrap; word-wrap: break-word; }
+.msg.user { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+.msg.assistant { align-self: flex-start; background: var(--panel-soft); color: var(--text); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.msg.assistant pre { background: #0f172a; color: #e2e8f0; padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin: 8px 0; }
+.msg.assistant code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+.msg.system { align-self: center; color: var(--muted); font-style: italic; font-size: 12.5px; }
+.msg-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.msg-actions .btn { padding: 5px 10px; font-size: 12px; }
+
+.chat-input-row { display: flex; gap: 8px; margin-top: 10px; }
+.chat-input { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; background: var(--panel-soft); border: 1px solid var(--line); border-radius: 10px; font-family: inherit; font-size: 13.5px; line-height: 1.5; outline: none; }
+.chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background: var(--panel); }
+
+.help-text { font-size: 12px; color: var(--muted); padding: 6px 4px; line-height: 1.5; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--text); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 50; box-shadow: var(--shadow-lg); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: var(--err); }
+.toast.ok { background: var(--ok); }
+</style>
+</head>
+<body>
+
+<!-- App shell — populated dynamically by the JS once we know auth state. -->
+<div id="root"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const $ = (sel, root = document) => root.querySelector(sel);
+const root = $("#root");
+
+const state = {
+  user: null,
+  catalog: { saved: "", current: "" },
+  meta: { catalogJs: "", exclusions: "" },
+  chat: [],
+  busy: { save: false, fetchWcu: false, chat: false },
+};
+
+// ---------- Toast ----------
+function toast(msg, kind = "") {
+  const t = $("#toast");
+  t.className = `toast show ${kind}`;
+  t.textContent = msg;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+// ---------- Init ----------
+boot().catch(err => {
+  console.error(err);
+  root.innerHTML = `<div style="padding:40px;text-align:center;color:#dc2626">Failed to load admin: ${escapeHtml(String(err.message || err))}</div>`;
+});
+
+async function boot() {
+  // Try to fetch our session.
+  const me = await fetch("/api/me", { credentials: "include" }).then(r => r.json()).catch(() => ({ authenticated: false }));
+  state.user = me.authenticated ? { username: me.username, expiresAt: me.expiresAt } : null;
+
+  // Always grab the read-only COURSE_META + ACCEL_EXCLUSIONS snippets from
+  // the live index.html so the chat assistant has them as context. These
+  // are static source; admin won't edit them through this page.
+  try {
+    const src = await fetch("/index.html", { cache: "no-store" }).then(r => r.text());
+    state.meta.catalogJs = extractObjectBlock(src, "const COURSE_META = ") || "";
+    state.meta.exclusions = extractArrayBlock(src, "const ACCEL_EXCLUSIONS = ") || "";
+  } catch (_) { /* non-fatal */ }
+
+  if (state.user) await loadCatalog();
+  render();
+}
+
+function extractObjectBlock(src, anchor) {
+  const start = src.indexOf(anchor);
+  if (start === -1) return null;
+  let i = src.indexOf("{", start);
+  if (i === -1) return null;
+  let depth = 0, end = -1;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (c === "{") depth++;
+    else if (c === "}") { depth--; if (depth === 0) { end = i; break; } }
+  }
+  return end === -1 ? null : src.slice(src.indexOf("{", start), end + 1);
+}
+function extractArrayBlock(src, anchor) {
+  const start = src.indexOf(anchor);
+  if (start === -1) return null;
+  let i = src.indexOf("[", start);
+  if (i === -1) return null;
+  let depth = 0, end = -1;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (c === "[") depth++;
+    else if (c === "]") { depth--; if (depth === 0) { end = i; break; } }
+  }
+  return end === -1 ? null : src.slice(src.indexOf("[", start), end + 1);
+}
+
+async function loadCatalog() {
+  try {
+    const r = await fetch("/api/catalog", { credentials: "include", cache: "no-store" });
+    const text = (r.ok && r.status !== 204) ? await r.text() : "";
+    state.catalog.saved = text;
+    state.catalog.current = text;
+  } catch { state.catalog.saved = state.catalog.current = ""; }
+}
+
+// ---------- Render ----------
+function render() {
+  root.innerHTML = state.user ? viewWorkspace() : viewLogin();
+  wireUp();
+}
+
+function viewLogin() {
+  return `
+    <div class="app-bar">
+      <div class="app-bar-left">
+        <span class="brand-pill">Admin</span>
+        <h1 class="title">CSC Flowchart</h1>
+      </div>
+      <div class="userbar"><a href="/">← Public view</a></div>
+    </div>
+    <div class="login-wrap">
+      <form class="login-card" id="login-form">
+        <h1>Sign in</h1>
+        <p class="sub">Admin access to the CSC curriculum flowchart.</p>
+        <div id="login-error"></div>
+        <div class="field">
+          <label for="login-user">Username</label>
+          <input id="login-user" type="text" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="login-pass">Password</label>
+          <input id="login-pass" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn primary btn-primary" type="submit">Sign in</button>
+      </form>
+    </div>
+  `;
+}
+
+function viewWorkspace() {
+  return `
+    <div class="app-bar">
+      <div class="app-bar-left">
+        <span class="brand-pill">Admin</span>
+        <h1 class="title">CSC Flowchart</h1>
+      </div>
+      <div class="userbar">
+        Signed in as <span class="who">${escapeHtml(state.user.username)}</span>
+        <a href="/" target="_blank" rel="noopener">↗ Open public view</a>
+        <button id="btn-logout" class="btn">Sign out</button>
+      </div>
+    </div>
+    <div class="workspace">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Catalog editor</h2>
+          <span class="sub">Edits go live to <code>/api/catalog</code> after Save.</span>
+        </div>
+        <div class="panel-body">
+          <div class="cat-toolbar">
+            <button id="btn-fetch-wcu" class="btn">⤓ Fetch from WCU</button>
+            <button id="btn-revert" class="btn">Revert</button>
+            <button id="btn-save" class="btn primary" disabled>Save</button>
+            <span class="cat-stats" id="cat-stats">
+              <span><b id="cs-courses">0</b> courses</span>
+              <span><b id="cs-edges">0</b> edges</span>
+              <span><b id="cs-ext">0</b> external</span>
+            </span>
+          </div>
+          <textarea id="cat" class="cat-textarea" spellcheck="false" placeholder="Loading…"></textarea>
+          <div class="cat-status idle" id="cat-status">No changes</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>AI assistant</h2>
+          <span class="sub">Llama 3.3 70B · Workers AI</span>
+        </div>
+        <div class="panel-body">
+          <div id="chat-stream" class="chat-stream"></div>
+          <div class="chat-input-row">
+            <textarea id="chat-in" class="chat-input" placeholder="Ask the AI to update a course, fix prereqs, add a cert tag, …"></textarea>
+            <button id="btn-send" class="btn primary">Send</button>
+          </div>
+          <p class="help-text">It sees your current catalog text and the read-only <code>COURSE_META</code> / <code>ACCEL_EXCLUSIONS</code>. If it returns a JSON patch, you'll see an <b>Apply</b> button.</p>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+// ---------- Wire up the current view's handlers ----------
+function wireUp() {
+  if (state.user) wireWorkspace();
+  else wireLogin();
+}
+
+function wireLogin() {
+  const form = $("#login-form");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = $("#login-user").value.trim();
+    const password = $("#login-pass").value;
+    const errEl = $("#login-error");
+    errEl.innerHTML = "";
+    const submit = form.querySelector("button[type=submit]");
+    submit.disabled = true; submit.textContent = "Signing in…";
+    try {
+      const r = await fetch("/api/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || `Login failed (${r.status})`);
+      state.user = { username: j.username };
+      await loadCatalog();
+      render();
+    } catch (err) {
+      errEl.innerHTML = `<div class="login-error">${escapeHtml(err.message)}</div>`;
+      submit.disabled = false; submit.textContent = "Sign in";
+    }
+  });
+}
+
+function wireWorkspace() {
+  const ta = $("#cat");
+  ta.value = state.catalog.current;
+  refreshSummary();
+
+  ta.addEventListener("input", () => {
+    state.catalog.current = ta.value;
+    refreshSummary();
+  });
+
+  $("#btn-logout").onclick = async () => {
+    await fetch("/api/logout", { method: "POST", credentials: "include" }).catch(() => {});
+    state.user = null;
+    render();
+  };
+
+  $("#btn-revert").onclick = () => {
+    state.catalog.current = state.catalog.saved;
+    ta.value = state.catalog.saved;
+    refreshSummary();
+  };
+
+  $("#btn-save").onclick = async () => {
+    if (state.busy.save) return;
+    state.busy.save = true;
+    setStatus("busy", "Saving…");
+    try {
+      const r = await fetch("/api/admin/catalog", {
+        method: "POST", credentials: "include",
+        headers: { "content-type": "text/plain" },
+        body: state.catalog.current,
+      });
+      if (!r.ok) throw new Error((await r.text()) || `${r.status}`);
+      state.catalog.saved = state.catalog.current;
+      setStatus("ok", "Saved — public site will pick it up on next load");
+      toast("Saved", "ok");
+    } catch (err) {
+      setStatus("err", `Save failed: ${err.message}`);
+      toast(`Save failed: ${err.message}`, "err");
+    } finally {
+      state.busy.save = false;
+      refreshSummary();
+    }
+  };
+
+  $("#btn-fetch-wcu").onclick = async () => {
+    if (state.busy.fetchWcu) return;
+    if (state.catalog.current !== state.catalog.saved) {
+      if (!confirm("You have unsaved edits. Fetch from WCU will overwrite the editor. Continue?")) return;
+    }
+    state.busy.fetchWcu = true;
+    setStatus("busy", "Fetching catalogs from WCU…");
+    try {
+      const r = await fetch("/api/admin/fetch-wcu", { method: "POST", credentials: "include" });
+      if (!r.ok) throw new Error((await r.text()) || `${r.status}`);
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error || "fetch failed");
+      state.catalog.current = j.text || "";
+      ta.value = state.catalog.current;
+      refreshSummary();
+      const note = `Fetched ${j.counts.total} courses (UG ${j.counts.ug} + Grad ${j.counts.grad})`;
+      setStatus("dirty", note + " — review & Save");
+      toast(note, "ok");
+    } catch (err) {
+      setStatus("err", `Fetch failed: ${err.message}`);
+      toast(`Fetch failed: ${err.message}`, "err");
+    } finally {
+      state.busy.fetchWcu = false;
+    }
+  };
+
+  // ---- Chat ----
+  renderChat();
+  const chatIn = $("#chat-in");
+  chatIn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#btn-send").click(); }
+  });
+  $("#btn-send").onclick = sendChat;
+}
+
+// ---------- Status / summary ----------
+function setStatus(kind, msg) {
+  const el = $("#cat-status");
+  el.className = `cat-status ${kind}`;
+  el.innerHTML = kind === "busy" ? `<span class="spinner"></span>${escapeHtml(msg)}` : escapeHtml(msg);
+}
+
+function refreshSummary() {
+  const ta = $("#cat");
+  if (!ta) return;
+  const s = parseCatalog(ta.value);
+  $("#cs-courses").textContent = s.courses;
+  $("#cs-edges").textContent = s.edges;
+  $("#cs-ext").textContent = s.externals;
+  const dirty = state.catalog.current !== state.catalog.saved;
+  $("#btn-save").disabled = !dirty;
+  if (!dirty) setStatus("idle", "No changes");
+  else setStatus("dirty", "Unsaved changes");
+}
+
+// Tiny parser duplicate (counts only).
+function parseCatalog(text) {
+  const headerRe = /([A-Z]{2,4})\s+(\d{3})\.\s+([^.]+?)\.\s+([\d\-]+)\s+Credits?\./g;
+  const heads = [];
+  let m;
+  while ((m = headerRe.exec(text)) !== null) heads.push(m);
+  const codes = new Set();
+  const externals = new Set();
+  let edges = 0;
+  for (let i = 0; i < heads.length; i++) {
+    const h = heads[i];
+    const code = `${h[1]} ${h[2]}`;
+    codes.add(code);
+    const bodyEnd = i + 1 < heads.length ? heads[i+1].index : text.length;
+    const body = text.slice(h.index + h[0].length, bodyEnd);
+    const pm = body.match(/(Pre\s*\/\s*Co\s*requisites?|Prerequisites?|Prerequisite|Co\s*-?\s*requisites?)\s*:/i);
+    if (!pm) continue;
+    const tail = body.slice(pm.index + pm[0].length);
+    const codeRe = /([A-Z]{2,4})\s*(\d{3})/g;
+    const prs = new Set();
+    let cm;
+    while ((cm = codeRe.exec(tail)) !== null) {
+      const p = `${cm[1]} ${cm[2]}`;
+      if (p !== code) prs.add(p);
+    }
+    edges += prs.size;
+  }
+  for (const h of heads) {
+    const code = `${h[1]} ${h[2]}`;
+    if (!code.startsWith("CSC ")) externals.add(code);
+  }
+  return { courses: codes.size, edges, externals: externals.size };
+}
+
+// ---------- Chat ----------
+function renderChat() {
+  const stream = $("#chat-stream");
+  if (!stream) return;
+  if (state.chat.length === 0) {
+    stream.innerHTML = `
+      <div class="chat-empty">
+        <div>Ask the assistant to help maintain the curriculum.</div>
+        <div style="margin-top:10px">
+          <span class="ex" data-ex="Add CSC 305 as a 300-level elective with the Cybersecurity certificate tag.">Add a course</span>
+          <span class="ex" data-ex="Fix the prereq line for CSC 382 to require CSC 381 or STA 248.">Fix a prereq</span>
+          <span class="ex" data-ex="Remove the Junior standing alt-prereq from CSC 381.">Tweak metadata</span>
+        </div>
+      </div>`;
+    stream.querySelectorAll(".ex").forEach(el => el.onclick = () => { $("#chat-in").value = el.dataset.ex; $("#chat-in").focus(); });
+    return;
+  }
+  stream.innerHTML = state.chat.map(renderMessage).join("");
+  // Wire apply buttons.
+  stream.querySelectorAll("[data-action]").forEach((btn) => {
+    btn.onclick = () => handleMsgAction(btn.dataset.action, btn.dataset.idx, btn);
+  });
+  stream.scrollTop = stream.scrollHeight;
+}
+
+function renderMessage(m, idx) {
+  if (m.role === "user") {
+    return `<div class="msg user">${escapeHtml(m.content)}</div>`;
+  }
+  if (m.role === "system") {
+    return `<div class="msg system">${escapeHtml(m.content)}</div>`;
+  }
+  // assistant
+  const patch = extractPatch(m.content);
+  const text = renderAssistant(m.content);
+  let actions = "";
+  if (patch) {
+    actions = `<div class="msg-actions">`;
+    if (patch.catalogPatch) actions += `<button class="btn primary" data-action="apply-catalog" data-idx="${idx}">Apply to editor</button>`;
+    if (patch.metaPatch || patch.metaRemove || patch.exclusionsAdd || patch.exclusionsRemove) {
+      actions += `<button class="btn" data-action="copy-meta" data-idx="${idx}">Copy meta patch</button>`;
+    }
+    actions += `</div>`;
+  }
+  return `<div class="msg assistant" data-idx="${idx}">${text}${actions}</div>`;
+}
+
+function renderAssistant(text) {
+  // Highlight ```json``` blocks but otherwise escape.
+  const parts = [];
+  let i = 0;
+  const re = /```(\w+)?\n([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > i) parts.push(escapeHtml(text.slice(i, m.index)));
+    parts.push(`<pre><code>${escapeHtml(m[2])}</code></pre>`);
+    i = m.index + m[0].length;
+  }
+  if (i < text.length) parts.push(escapeHtml(text.slice(i)));
+  return parts.join("");
+}
+
+function extractPatch(text) {
+  const m = text.match(/```json\s*([\s\S]*?)```/i);
+  if (!m) return null;
+  try {
+    const obj = JSON.parse(m[1].trim());
+    return obj && typeof obj === "object" ? obj : null;
+  } catch { return null; }
+}
+
+function handleMsgAction(action, idx, btn) {
+  const m = state.chat[Number(idx)];
+  if (!m) return;
+  const patch = extractPatch(m.content);
+  if (!patch) return;
+  if (action === "apply-catalog" && typeof patch.catalogPatch === "string") {
+    state.catalog.current = patch.catalogPatch;
+    $("#cat").value = state.catalog.current;
+    refreshSummary();
+    toast("Applied to editor — review & Save", "ok");
+    btn.disabled = true; btn.textContent = "Applied";
+  } else if (action === "copy-meta") {
+    const subset = {};
+    if (patch.metaPatch) subset.metaPatch = patch.metaPatch;
+    if (patch.metaRemove) subset.metaRemove = patch.metaRemove;
+    if (patch.exclusionsAdd) subset.exclusionsAdd = patch.exclusionsAdd;
+    if (patch.exclusionsRemove) subset.exclusionsRemove = patch.exclusionsRemove;
+    const text = JSON.stringify(subset, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+      toast("Meta patch copied to clipboard — paste into public/index.html source", "ok");
+    }).catch(() => toast("Copy failed", "err"));
+  }
+}
+
+async function sendChat() {
+  if (state.busy.chat) return;
+  const inp = $("#chat-in");
+  const text = inp.value.trim();
+  if (!text) return;
+  state.chat.push({ role: "user", content: text });
+  inp.value = "";
+  state.busy.chat = true;
+  state.chat.push({ role: "system", content: "Thinking…" });
+  renderChat();
+  try {
+    const r = await fetch("/api/admin/chat", {
+      method: "POST", credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        messages: state.chat.filter(m => m.role !== "system"),
+        context: {
+          catalog: state.catalog.current,
+          meta: state.meta.catalogJs,
+          exclusions: state.meta.exclusions,
+        },
+      }),
+    });
+    if (!r.ok) throw new Error((await r.text()) || `${r.status}`);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "chat failed");
+    // Drop the thinking placeholder
+    state.chat = state.chat.filter(m => !(m.role === "system" && m.content === "Thinking…"));
+    state.chat.push({ role: "assistant", content: j.reply || "(no reply)" });
+  } catch (err) {
+    state.chat = state.chat.filter(m => !(m.role === "system" && m.content === "Thinking…"));
+    state.chat.push({ role: "system", content: `Error: ${err.message}` });
+    toast(`Chat error: ${err.message}`, "err");
+  } finally {
+    state.busy.chat = false;
+    renderChat();
+  }
+}
+
+// ---------- utils ----------
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+</script>
+</body>
+</html>

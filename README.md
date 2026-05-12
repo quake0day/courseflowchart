@@ -10,8 +10,18 @@ Live: <https://courseflowchart.pages.dev/>
 ```
 .
 ├── public/
-│   └── index.html       The whole app — HTML, CSS, JS, and the catalog text.
-├── wrangler.toml        Cloudflare Pages project config.
+│   ├── index.html          Public flowchart — HTML, CSS, JS, embedded catalog fallback.
+│   └── admin.html          Admin console (login → editor + AI chat).
+├── functions/
+│   ├── _shared/auth.js     HMAC-signed session cookie helpers.
+│   └── api/
+│       ├── catalog.js               GET — public, returns KV value.
+│       ├── login.js / logout.js / me.js
+│       └── admin/
+│           ├── catalog.js           POST — write KV (auth required).
+│           ├── fetch-wcu.js         POST — scrape WCU catalog pages.
+│           └── chat.js              POST — Workers AI chat proxy.
+├── wrangler.toml           Cloudflare Pages project config + KV + AI bindings.
 ├── .gitignore
 └── README.md
 ```
@@ -51,11 +61,51 @@ red ✕ on its partner.
 - **Program rules** sidebar section lists the WCU stipulations for the MS
   and Accelerated programs.
 
-## Updating the catalog
+## Admin console
 
-The catalog is a single template literal in
-[`public/index.html`](public/index.html) named `DEFAULT_CATALOG`. Each course
-is one block:
+Visit `/admin` and sign in. The console has two panels:
+
+- **Catalog editor** — pre-loaded with whatever is currently in KV. Buttons:
+  - **Fetch from WCU** scrapes the two catalog pages
+    ([UG](https://catalog.wcupa.edu/undergraduate/sciences-mathematics/computer-science/) +
+    [Grad](https://catalog.wcupa.edu/graduate/sciences-mathematics/computer-science/))
+    via a Pages Function (no CORS issues) and overwrites the editor with
+    the parsed text in our flat format.
+  - **Revert** restores the last-saved version.
+  - **Save** writes to KV. The public page picks up the new text on next
+    load (it fetches `/api/catalog` with `cache: 'no-store'`).
+- **AI assistant** — chat with Llama 3.3 70B (Workers AI). The assistant
+  sees your current catalog text plus the read-only `COURSE_META` and
+  `ACCEL_EXCLUSIONS` extracted from `index.html`. When it returns a JSON
+  patch in a \`\`\`json fence:
+  - `catalogPatch`: full replacement text → an **Apply to editor** button.
+  - `metaPatch` / `metaRemove` / `exclusionsAdd` / `exclusionsRemove`:
+    structural changes that live in source → a **Copy meta patch** button
+    that puts the JSON on your clipboard. You paste it into
+    `public/index.html`, commit, redeploy.
+
+### Required secrets
+
+Run these once before the admin works:
+
+```bash
+# the password you'll type into the login form
+wrangler pages secret put ADMIN_PASSWORD --project-name courseflowchart
+
+# any long random string — used to sign session cookies
+wrangler pages secret put SESSION_SECRET --project-name courseflowchart
+```
+
+Username is hard-coded to `schen` in `functions/api/login.js`. Change the
+`ADMIN_USERNAME` constant if you want a different one.
+
+## Updating the catalog (manual / source edit path)
+
+The catalog is also embedded as a fallback template literal in
+[`public/index.html`](public/index.html) named `DEFAULT_CATALOG`. If KV
+is empty (or the function is down), the page renders from this fallback.
+You can also edit the fallback directly if you prefer source-level
+control. Each course is one block:
 
 ```
 CSC 141. Computer Science I. 3 Credits. <description>. Prerequisite: CSC NNN.

@@ -1,3 +1,16 @@
 name = "courseflowchart"
 compatibility_date = "2025-05-01"
 pages_build_output_dir = "public"
+
+# Stores the editable catalog text. The same namespace ID we created earlier.
+[[kv_namespaces]]
+binding = "CATALOG_KV"
+id = "d6ecf9bfe3104450bbf5da47768700e3"
+
+# Workers AI binding for the admin chat assistant.
+[ai]
+binding = "AI"
+
+# Required secrets (set with `wrangler pages secret put NAME --project-name courseflowchart`):
+#   ADMIN_PASSWORD   — plaintext password for the schen account
+#   SESSION_SECRET   — random string used to sign session cookies (any long random string)

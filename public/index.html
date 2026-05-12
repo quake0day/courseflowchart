@@ -438,7 +438,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
       <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; min-height: 0;">
         <p class="footer-note">
           Catalog managed by the
-          <a class="muted-link" href="https://catalog.wcupa.edu/undergraduate/sciences-mathematics/computer-science/" target="_blank" rel="noopener noreferrer">CSC department ↗</a>.
+          <a class="muted-link" href="https://catalog.wcupa.edu/undergraduate/sciences-mathematics/computer-science/" target="_blank" rel="noopener noreferrer">CSC department ↗</a>.<br/>
+          <a href="/admin" class="muted-link">Admin sign-in →</a>
         </p>
       </div>
     </div>
@@ -2001,8 +2002,25 @@ function toast(msg) {
   toast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
 }
 
-// Catalog is hard-coded in this file (DEFAULT_CATALOG). To update it, edit
-// the string in this file and redeploy.
+// The static file embeds DEFAULT_CATALOG as a safety fallback. At runtime
+// we try /api/catalog first (admin-edited via KV); if that's empty or
+// fails, we fall back to the embedded text so the chart always renders.
+async function fetchCatalog() {
+  try {
+    const r = await fetch('/api/catalog', { cache: 'no-store' });
+    if (r.ok && r.status !== 204) {
+      const txt = await r.text();
+      if (txt && txt.trim()) return txt;
+    }
+  } catch (_) { /* network error → fallback */ }
+  return DEFAULT_CATALOG;
+}
+
+async function reloadCatalog() {
+  const txt = await fetchCatalog();
+  window.__lastCatalog = txt;
+  applyView(state.view);
+}
 
 // ---------- Program view routing ----------
 function viewFromHash() {
@@ -2051,11 +2069,16 @@ window.addEventListener('hashchange', () => applyView(viewFromHash()));
 // ---------- Initial load ----------
 buildLegend();
 buildPrograms();
-// Seed the view from the URL hash and paint the chart from the catalog
-// baked into this file.
+// Paint with the embedded default first so something is on-screen instantly,
+// then upgrade with whatever the admin has stored in KV.
 state.view = viewFromHash();
 window.__lastCatalog = DEFAULT_CATALOG;
 applyView(state.view, { animate: false });
+fetchCatalog().then(txt => {
+  if (!txt || txt === DEFAULT_CATALOG) return;
+  window.__lastCatalog = txt;
+  applyView(state.view, { animate: false });
+});
 
 // Robust initial fit: wait until canvas-wrap has real dimensions, then fit
 let didFit = false;
