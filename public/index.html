@@ -119,6 +119,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .prereq-chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .prereq-chip.empty { color: var(--muted); border-style: dashed; cursor: default; background: transparent; }
 .prereq-chip.alt { color: var(--text-soft); background: #fff; border-style: dashed; cursor: default; }
+.details-inactive-banner {
+  padding: 10px 14px;
+  background: #f1f5f9;
+  border-left: 3px solid #94a3b8;
+  border-radius: 6px;
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
 .details-accel-body { font-size: 13px; color: var(--text-soft); line-height: 1.55; display: flex; flex-direction: column; gap: 8px; }
 .details-accel-warn { padding: 8px 12px; background: rgba(220,38,38,0.06); border-left: 3px solid #dc2626; border-radius: 6px; color: #b91c1c; font-size: 12.5px; }
 
@@ -505,6 +515,10 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
               <span class="ex-card" style="color:#d97706;background:#fef3c7"></span>
               <span>Class Standing (virtual node)</span>
             </div>
+            <div class="legend-item">
+              <span class="ex-card" style="color:#94a3b8;background:#f1f5f9;border-style:dotted;opacity:.75"></span>
+              <span>Retired — no longer in the WCU catalog</span>
+            </div>
           </div>
         </div>
 
@@ -803,15 +817,15 @@ const COURSE_META = {
   'CSC 321': { category: 'elective', accelGrad: 'CSC 545' },
   'CSC 331': { category: 'elective', certs: ['cloud'],            accelGrad: 'CSC 525' },
   'CSC 335': { category: 'elective', certs: ['cybersec', 'cloud'], accelGrad: 'CSC 535' },
-  'CSC 341': { category: 'elective' },
+  'CSC 341': { category: 'elective', inactive: true },
   'CSC 345': { category: 'core' },
-  'CSC 365': { category: 'elective' },
+  'CSC 365': { category: 'elective', inactive: true },
   'CSC 381': { category: 'elective', altPrereqs: ['Junior'] },
   'CSC 382': { category: 'elective', altPrereqs: ['Junior'] },
   'CSC 400': { category: 'elective', accelGrad: 'CSC 605' },
   'CSC 402': { category: 'capstone', certs: ['cybersec'],          accelGrad: 'CSC 555' },
   'CSC 404': { category: 'elective' },
-  'CSC 406': { category: 'elective' },
+  'CSC 406': { category: 'elective', inactive: true },
   'CSC 416': { category: 'elective', accelGrad: 'CSC 565' },
   'CSC 417': { category: 'elective', accelGrad: 'CSC 585' },
   'CSC 418': { category: 'elective', accelGrad: 'CSC 587' },
@@ -1324,56 +1338,70 @@ function render() {
     .attr('width', d => d.w).attr('height', d => d.h)
     .attr('rx', 10).attr('ry', 10)
     .attr('fill', d => {
-      // Electives use a white fill so they look "outlined" — Required Core
-      // and Capstone stay filled with their soft level color, giving the
-      // chart a clear at-a-glance Core vs. Elective split.
+      if (d.meta?.inactive) return '#f1f5f9';                         // retired → soft gray
       if (!d.standing && !d.external && d.meta?.category === 'elective') return '#ffffff';
       return softFor(d);
     })
-    .attr('stroke', d => colorFor(d))
+    .attr('stroke', d => d.meta?.inactive ? '#94a3b8' : colorFor(d))
     .attr('stroke-width', 2)
-    .attr('stroke-opacity', d => d.standing ? 1 : (d.external ? 0.55 : 1))
+    .attr('stroke-opacity', d => d.meta?.inactive ? 0.7 : (d.standing ? 1 : (d.external ? 0.55 : 1)))
     .attr('stroke-dasharray', d => {
-      if (d.standing) return null;       // standing → solid amber
-      if (d.external) return '4 4';      // MAT/STA/ECO → dashed gray
+      if (d.meta?.inactive) return '1 4';   // retired → dotted (distinct from external's dashed)
+      if (d.standing) return null;
+      if (d.external) return '4 4';
       const cat = d.meta?.category;
       if (cat === 'independent' || cat === 'topics') return '5 4';
       return null;
     });
 
   // Inset, fully-rounded little stripe so it never pokes past the card's
-  // own rounded corners.
+  // own rounded corners. Hidden for retired courses since their identity
+  // (level) is no longer relevant.
   allNodes.select('.node-accent')
     .attr('x', 6).attr('y', 12)
     .attr('width', 3).attr('height', d => d.h - 24)
     .attr('rx', 1.5).attr('ry', 1.5)
     .attr('fill', d => colorFor(d))
-    .attr('opacity', d => d.standing ? 1 : (d.external ? 0.5 : 1));
+    .attr('opacity', d => {
+      if (d.meta?.inactive) return 0;
+      return d.standing ? 1 : (d.external ? 0.5 : 1);
+    });
 
   allNodes.select('.node-code')
     .attr('x', 18).attr('y', 27)
     .attr('font-size', 16).attr('font-weight', 700)
-    .attr('fill', '#0f172a').attr('letter-spacing', '-0.01em')
+    .attr('fill', d => d.meta?.inactive ? '#64748b' : '#0f172a')
+    .attr('letter-spacing', '-0.01em')
+    .attr('text-decoration', d => d.meta?.inactive ? 'line-through' : null)
     .text(d => d.code);
 
   allNodes.select('.node-title')
     .attr('x', 18).attr('y', 47)
-    .attr('font-size', 11).attr('fill', '#334155')
+    .attr('font-size', 11)
+    .attr('fill', d => d.meta?.inactive ? '#94a3b8' : '#334155')
     .text(d => truncate(d.title, 28));
 
+  // Top-right pill: shows "N cr" normally, "Retired" for inactive courses.
   allNodes.select('.credit-pill')
-    .attr('x', d => d.w - 48).attr('y', 15)
-    .attr('width', 34).attr('height', 18)
+    .attr('x', d => d.meta?.inactive ? d.w - 64 : d.w - 48).attr('y', 15)
+    .attr('width', d => d.meta?.inactive ? 50 : 34).attr('height', 18)
     .attr('rx', 9).attr('ry', 9)
-    .attr('fill', '#ffffff')
-    .attr('opacity', d => (d.external || !d.credits) ? 0 : 0.9);
+    .attr('fill', d => d.meta?.inactive ? '#e2e8f0' : '#ffffff')
+    .attr('stroke', d => d.meta?.inactive ? '#cbd5e1' : 'none')
+    .attr('stroke-width', d => d.meta?.inactive ? 1 : 0)
+    .attr('opacity', d => {
+      if (d.meta?.inactive) return 1;
+      return (d.external || !d.credits) ? 0 : 0.9;
+    });
 
   allNodes.select('.node-credits')
-    .attr('x', d => d.w - 31).attr('y', 28)
-    .attr('font-size', 10.5).attr('font-weight', 700)
+    .attr('x', d => d.meta?.inactive ? d.w - 39 : d.w - 31).attr('y', 28)
+    .attr('font-size', d => d.meta?.inactive ? 9 : 10.5)
+    .attr('font-weight', 700)
     .attr('text-anchor', 'middle')
-    .attr('fill', d => colorFor(d))
-    .text(d => d.credits ? `${d.credits} cr` : '');
+    .attr('letter-spacing', d => d.meta?.inactive ? '0.08em' : null)
+    .attr('fill', d => d.meta?.inactive ? '#64748b' : colorFor(d))
+    .text(d => d.meta?.inactive ? 'RETIRED' : (d.credits ? `${d.credits} cr` : ''));
 
   // Capstone ★ marker (CSC 402)
   allNodes.select('.capstone-star')
@@ -1706,6 +1734,16 @@ function openDetails(code) {
     b.onclick = () => toggleCertificate(cert);
     badges.appendChild(b);
   });
+  // Inactive banner (only for retired courses).
+  const oldInact = document.getElementById('details-inactive');
+  if (oldInact) oldInact.remove();
+  if (c.meta?.inactive) {
+    const banner = document.createElement('div');
+    banner.id = 'details-inactive';
+    banner.className = 'details-inactive-banner';
+    banner.textContent = 'This course is no longer in the current WCU catalog. It is kept here so existing dependency chains stay readable.';
+    document.getElementById('details-desc').before(banner);
+  }
   document.getElementById('details-desc').textContent = c.description || (c.external ? 'External prerequisite course (not part of the CSC catalog).' : 'No description provided.');
   // Optional accelerated-MS graduate equivalent (shown for either side of a pair).
   const existing = document.getElementById('details-accel');
