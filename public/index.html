@@ -911,7 +911,9 @@ const COURSE_META = {
   'CSC 587': { category: 'elective', programs: ['ms', 'ms-accel'], prereqNote: 'Student must major in Computer Science or be admitted to the web certificate program.' },
 
   // Additional MS courses (graduate certificates).
-  'CSC 515': { category: 'elective', programs: ['ms'] },
+  // CSC 515 only appears as part of the Web Technology certificate pool;
+  // it isn't a regular MS elective, so it's scoped to that cert only.
+  'CSC 515': { category: 'elective', programs: ['cert-web'] },
   'CSC 568': { category: 'elective', programs: ['ms'] },
   'CSC 571': { category: 'elective', programs: ['ms'] },
   'CSC 572': { category: 'elective', programs: ['ms'] },
@@ -937,8 +939,10 @@ const COURSE_META = {
   'MAT 162': { category: 'external', programs: ['bs', 'minor-cs'] },
 
   // Non-CSC graduate courses referenced by certificate programs.
-  'STA 511': { category: 'elective', programs: ['ms'] },
-  'CRJ 555': { category: 'elective', programs: ['ms'] },
+  // Scoped to their cert pools so they don't clutter the main MS view —
+  // they're not standalone MS electives, only available via the cert path.
+  'STA 511': { category: 'elective', programs: ['cert-info-sys'] },
+  'CRJ 555': { category: 'elective', programs: ['cert-comp-sec'] },
 };
 
 // Program views. Each entry decides which courses are visible.
