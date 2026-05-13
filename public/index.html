@@ -1633,22 +1633,40 @@ function exclusionPartnerOf(code) {
   return null;
 }
 
-// When the user hovers a course, gently push its same-column direct
-// prereqs/dependents away so the otherwise-short straight connector
-// between them becomes visible. Animated; resets when focus clears.
+// When the user hovers a course, every same-column edge anywhere in
+// the highlighted prereq/dependent chain (not just edges directly
+// touching the hovered node) gently pushes its endpoints apart so the
+// otherwise-short straight connector between them becomes visible.
+// Animated; resets when focus clears.
 const HOVER_SHIFT = 7;
 function applyHoverShift(focusCode) {
-  // Reset all offsets first.
   state.nodes.forEach(n => { n._hoverDy = 0; });
   if (focusCode && state.byCode[focusCode]) {
-    const f = state.byCode[focusCode];
-    const sameColNeighbours = new Set();
-    state.parents[focusCode]?.forEach(p => sameColNeighbours.add(p));
-    state.children[focusCode]?.forEach(c => sameColNeighbours.add(c));
-    sameColNeighbours.forEach(code => {
-      const n = state.byCode[code];
-      if (!n || Math.abs(n.x - f.x) > 1) return;
-      n._hoverDy = n.y < f.y ? -HOVER_SHIFT : HOVER_SHIFT;
+    const lit = new Set([
+      ...reachable(focusCode, state.parents),
+      ...reachable(focusCode, state.children),
+    ]);
+    // Each lit same-column edge contributes +1/−1 votes to push endpoints
+    // apart along Y. Summing votes means a node in the middle of a same-
+    // column chain (pushed up by one edge, down by another) correctly
+    // cancels out, while end nodes spread cleanly.
+    const votes = {};
+    state.edges.forEach(e => {
+      if (e.exclusion) return;
+      if (!(lit.has(e.source) && lit.has(e.target))) return;
+      const s = state.byCode[e.source], t = state.byCode[e.target];
+      if (!s || !t || Math.abs(s.x - t.x) > 1) return;
+      if (s.y < t.y) {
+        votes[e.source] = (votes[e.source] || 0) - 1;
+        votes[e.target] = (votes[e.target] || 0) + 1;
+      } else {
+        votes[e.source] = (votes[e.source] || 0) + 1;
+        votes[e.target] = (votes[e.target] || 0) - 1;
+      }
+    });
+    state.nodes.forEach(n => {
+      const v = votes[n.code];
+      if (v) n._hoverDy = Math.sign(v) * HOVER_SHIFT;
     });
   }
   d3.selectAll('.node')
