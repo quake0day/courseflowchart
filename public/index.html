@@ -1311,14 +1311,19 @@ setupMarkers();
 function pathFor(e) {
   const s = state.byCode[e.source], t = state.byCode[e.target];
   if (!s || !t) return '';
+  // _hoverDy is a transient nudge applied when a connected neighbour is
+  // being focused (see applyHoverShift). The path follows it so the link
+  // stretches/contracts with the nodes.
+  const sCy = s.y + (s._hoverDy || 0);
+  const tCy = t.y + (t._hoverDy || 0);
   // Same column → exit the source on the side facing the target, bulge to
   // the right around any intervening nodes, and enter the target from the
   // matching side. Adjacent stacks (e.g. CSC 141 → CSC 142) get a short
   // straight connector instead of a giant disproportionate loop.
   if (Math.abs(s.x - t.x) < 1) {
-    const goingDown = t.y > s.y;
-    const sy = s.y + (goingDown ? s.h/2 : -s.h/2);
-    const ty = t.y + (goingDown ? -t.h/2 : t.h/2);
+    const goingDown = tCy > sCy;
+    const sy = sCy + (goingDown ? s.h/2 : -s.h/2);
+    const ty = tCy + (goingDown ? -t.h/2 : t.h/2);
     const vspan = Math.abs(ty - sy);
     if (vspan < 28) return `M ${s.x},${sy} L ${t.x},${ty}`;
     const off = s.w/2 + 40;
@@ -1328,8 +1333,8 @@ function pathFor(e) {
     return `M ${s.x},${sy} C ${s.x + off},${c1y} ${t.x + off},${c2y} ${t.x},${ty}`;
   }
   // Cross-column → left-to-right S-curve
-  const sx = s.x + s.w/2, sy = s.y;
-  const tx = t.x - t.w/2, ty = t.y;
+  const sx = s.x + s.w/2, sy = sCy;
+  const tx = t.x - t.w/2, ty = tCy;
   const mx = (sx + tx) / 2;
   return `M ${sx},${sy} C ${mx},${sy} ${mx},${ty} ${tx},${ty}`;
 }
@@ -1426,7 +1431,7 @@ function render() {
 
   const allNodes = nodeEnter.merge(nodeSel);
   allNodes
-    .attr('transform', d => `translate(${d.x - d.w/2},${d.y - d.h/2})`)
+    .attr('transform', d => `translate(${d.x - d.w/2},${d.y - d.h/2 + (d._hoverDy || 0)})`)
     .attr('data-code', d => d.code);
 
   // Legacy offset shadow rect — kept in the DOM for backwards compatibility
@@ -1627,6 +1632,36 @@ function exclusionPartnerOf(code) {
   }
   return null;
 }
+
+// When the user hovers a course, gently push its same-column direct
+// prereqs/dependents away so the otherwise-short straight connector
+// between them becomes visible. Animated; resets when focus clears.
+const HOVER_SHIFT = 7;
+function applyHoverShift(focusCode) {
+  // Reset all offsets first.
+  state.nodes.forEach(n => { n._hoverDy = 0; });
+  if (focusCode && state.byCode[focusCode]) {
+    const f = state.byCode[focusCode];
+    const sameColNeighbours = new Set();
+    state.parents[focusCode]?.forEach(p => sameColNeighbours.add(p));
+    state.children[focusCode]?.forEach(c => sameColNeighbours.add(c));
+    sameColNeighbours.forEach(code => {
+      const n = state.byCode[code];
+      if (!n || Math.abs(n.x - f.x) > 1) return;
+      n._hoverDy = n.y < f.y ? -HOVER_SHIFT : HOVER_SHIFT;
+    });
+  }
+  d3.selectAll('.node')
+    .transition().duration(180)
+    .attr('transform', d => `translate(${d.x - d.w/2},${d.y - d.h/2 + (d._hoverDy || 0)})`);
+  d3.selectAll('.link-group').select('path.link')
+    .transition().duration(180)
+    .attr('d', d => pathFor(d));
+  d3.selectAll('.link-group').select('path.link-flow')
+    .transition().duration(180)
+    .attr('d', d => pathFor(d));
+}
+
 function focusNode(code) {
   const lit = new Set([...reachable(code, state.parents), ...reachable(code, state.children)]);
   // Accelerated view: the focused course's exclusion partner stays lit (so
@@ -1650,6 +1685,7 @@ function focusNode(code) {
       if (d.alt) return 'url(#arrow-alt)';
       return (lit.has(d.source) && lit.has(d.target)) ? 'url(#arrow-active)' : 'url(#arrow-default)';
     });
+  applyHoverShift(code);
 }
 function clearFocus() {
   state.focusCode = null;
@@ -1665,6 +1701,7 @@ function clearFocus() {
   d3.selectAll('.node').classed('dim', false).classed('focus', false).classed('related', false).classed('excluded-by-focus', false);
   d3.selectAll('.link-group').classed('dim', false).classed('highlight', false);
   d3.selectAll('.link-group').select('path.link').attr('marker-end', d => d.exclusion ? null : (d.alt ? 'url(#arrow-alt)' : 'url(#arrow-default)'));
+  applyHoverShift(null);
 }
 
 // ---------- Level filter ----------
