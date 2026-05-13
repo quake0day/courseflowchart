@@ -886,11 +886,13 @@ const COURSE_META = {
   'CSC 513': { category: 'core',     programs: ['cert-prog-fund'] },
   'CSC 516': { category: 'core',     programs: ['cert-prog-fund'] },
 
-  // MS in CS — Core (4 required courses).
-  'CSC 520': { category: 'core',     programs: ['ms'] },
-  'CSC 530': { category: 'core',     programs: ['ms'] },
-  'CSC 540': { category: 'core',     programs: ['ms'] },
-  'CSC 560': { category: 'core',     programs: ['ms'] },
+  // MS in CS — Core (4 required courses). Required in both the standard MS
+  // and the accelerated BS→MS track (the four cores have no BS equivalent,
+  // so they're never substituted away in the accelerated program).
+  'CSC 520': { category: 'core',     programs: ['ms', 'ms-accel'] },
+  'CSC 530': { category: 'core',     programs: ['ms', 'ms-accel'] },
+  'CSC 540': { category: 'core',     programs: ['ms', 'ms-accel'] },
+  'CSC 560': { category: 'core',     programs: ['ms', 'ms-accel'] },
 
   // MS in CS — Electives. 'accel' = substitutable in the accelerated BS→MS program.
   'CSC 525': { category: 'elective', programs: ['ms', 'ms-accel'] },
@@ -1159,7 +1161,14 @@ function truncate(s, n) { return !s ? '' : (s.length <= n ? s : s.slice(0, n-1) 
 
 // ---------- Build & layout ----------
 function buildGraph(parsedCourses) {
-  let list = parsedCourses.map(c => ({ ...c, meta: COURSE_META[c.code] || null }));
+  let list = parsedCourses.map(c => {
+    const meta = COURSE_META[c.code] || null;
+    // Catalog-defined courses tagged as "external" (e.g. MAT 131/151/161/162,
+    // STA 511) should render in the Prerequisites column with dashed styling,
+    // same as auto-injected externals.
+    const external = c.external || meta?.category === 'external';
+    return { ...c, meta, external };
+  });
   // Apply the active program view — drops courses that don't belong.
   const view = VIEWS[state.view] || VIEWS.bs;
   if (view.includeOnly) {
