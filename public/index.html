@@ -1311,12 +1311,21 @@ setupMarkers();
 function pathFor(e) {
   const s = state.byCode[e.source], t = state.byCode[e.target];
   if (!s || !t) return '';
-  // Same column → bulge to the right
+  // Same column → exit the source on the side facing the target, bulge to
+  // the right around any intervening nodes, and enter the target from the
+  // matching side. Adjacent stacks (e.g. CSC 141 → CSC 142) get a short
+  // straight connector instead of a giant disproportionate loop.
   if (Math.abs(s.x - t.x) < 1) {
-    const sx = s.x, sy = s.y + s.h/2;
-    const tx = t.x, ty = t.y - t.h/2;
-    const off = s.w/2 + 36;
-    return `M ${sx},${sy} C ${sx + off},${sy + 10} ${tx + off},${ty - 10} ${tx},${ty}`;
+    const goingDown = t.y > s.y;
+    const sy = s.y + (goingDown ? s.h/2 : -s.h/2);
+    const ty = t.y + (goingDown ? -t.h/2 : t.h/2);
+    const vspan = Math.abs(ty - sy);
+    if (vspan < 28) return `M ${s.x},${sy} L ${t.x},${ty}`;
+    const off = s.w/2 + 40;
+    const tang = Math.min(vspan * 0.4, 60);
+    const c1y = sy + (goingDown ? tang : -tang);
+    const c2y = ty + (goingDown ? -tang : tang);
+    return `M ${s.x},${sy} C ${s.x + off},${c1y} ${t.x + off},${c2y} ${t.x},${ty}`;
   }
   // Cross-column → left-to-right S-curve
   const sx = s.x + s.w/2, sy = s.y;
