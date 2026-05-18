@@ -56,9 +56,6 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .search { width: 100%; background: var(--panel); border: 1px solid var(--line-strong); color: var(--text); padding: 10px 14px 10px 36px; border-radius: 10px; outline: none; font-size: 13px; font-family: inherit; transition: border-color .15s, box-shadow .15s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 12px center; background-size: 14px; }
 .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
 
-.programs-hint { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; }
-.legend-pill.cert.active { color: #fff; }
-.legend-pill.cert { font-weight: 500; }
 
 .footer-note { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0; padding-top: 16px; border-top: 1px solid var(--line); }
 .muted-link { color: var(--accent); text-decoration: none; font-weight: 500; }
@@ -419,6 +416,12 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
           <a class="view-tab" href="#/ms/accelerated" data-view="ms-accel">Accelerated</a>
         </div>
 
+        <p class="subsection-label">Undergraduate Certificates</p>
+        <div class="view-tabs two">
+          <a class="view-tab" href="#/cert/cybersec" data-view="cert-cybersec">Cybersec</a>
+          <a class="view-tab" href="#/cert/cloud"    data-view="cert-cloud">Cloud</a>
+        </div>
+
         <p class="subsection-label">Graduate Certificates</p>
         <div class="view-tabs four">
           <a class="view-tab" href="#/cert/prog-fund" data-view="cert-prog-fund">Prog Fund</a>
@@ -448,12 +451,6 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
       <div class="sidebar-section">
         <p class="section-label">Filter by level</p>
         <div class="legend" id="legend"></div>
-      </div>
-
-      <div class="sidebar-section">
-        <p class="section-label">Programs</p>
-        <div class="legend" id="programs"></div>
-        <p class="programs-hint" id="programs-hint">Click a certificate to trace its course path.</p>
       </div>
 
       <div class="sidebar-section" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; min-height: 0;">
@@ -566,8 +563,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
           <ul class="legend-tips">
             <li><b>Desktop:</b> hover a course to preview its chain, click to open the details panel.</li>
             <li><b>Mobile / iPad:</b> single-tap a course to trace its prerequisite chain, <b>double-tap</b> the same course to open its details.</li>
-            <li>Tap a certificate (Cybersecurity / Cloud) to highlight every course on that path.</li>
-            <li>Switch programs from the sidebar — <b>BS in CS</b>, <b>Minor · CS</b>, or <b>Minor · IT</b> — each shows only its required courses.</li>
+            <li>Switch programs from the sidebar — <b>BS</b>, <b>Minor · CS</b>, <b>Minor · IT</b>, <b>MS</b>, or any certificate — each shows only its required courses plus their prerequisites.</li>
+            <li>Tap a green <b>S</b> / pink <b>C</b> badge on a card to jump straight to that certificate's curriculum.</li>
             <li>Drag empty space to pan; pinch or scroll to zoom.</li>
           </ul>
         </div>
@@ -1078,6 +1075,36 @@ const VIEWS = {
     rules: [
       'Select <b>any 4</b> of the 5 listed courses (3 cr each, 12 cr total).',
       'These four courses <b>do</b> count toward the MS in Computer Science.',
+    ],
+  },
+  // ---- Undergraduate certificates --------------------------------------
+  // Layered on top of the BS — the direct courses are the ones tagged with
+  // the matching `certs` key in COURSE_META, and includeOnly here pulls in
+  // their prerequisite chain so the chart reads like a complete pathway.
+  'cert-cybersec': {
+    key: 'cert-cybersec',
+    label: 'Cybersec',
+    title: 'Undergraduate Certificate in Cybersecurity',
+    subtitle: 'Computer Security certificate courses (CSC 301 / 302 / 335 / 402 / 471 / 472) plus the prerequisite chain that leads to them.',
+    hash: '#/cert/cybersec',
+    includeOnly: [
+      'CSC 141', 'CSC 142', 'CSC 231', 'CSC 240', 'CSC 241',
+      'CSC 301', 'CSC 302', 'CSC 335',
+      'CSC 402', 'CSC 471', 'CSC 472',
+      'MAT 151', 'MAT 161',
+    ],
+  },
+  'cert-cloud': {
+    key: 'cert-cloud',
+    label: 'Cloud',
+    title: 'Undergraduate Certificate in Cloud Engineering',
+    subtitle: 'Cloud Engineering certificate courses (CSC 331 / 335 / 468 / 478) plus the prerequisite chain that leads to them.',
+    hash: '#/cert/cloud',
+    includeOnly: [
+      'CSC 141', 'CSC 142', 'CSC 220', 'CSC 231', 'CSC 240', 'CSC 241',
+      'CSC 331', 'CSC 335',
+      'CSC 468', 'CSC 478',
+      'MAT 151', 'MAT 161',
     ],
   },
 };
@@ -1711,15 +1738,6 @@ function focusNode(code) {
 }
 function clearFocus() {
   state.focusCode = null;
-  if (activeCert !== null) {
-    activeCert = null;
-    document.querySelectorAll('#programs .legend-pill').forEach(p => {
-      p.classList.remove('active');
-      p.style.background = '';
-      p.style.borderColor = '';
-      p.style.color = '';
-    });
-  }
   d3.selectAll('.node').classed('dim', false).classed('focus', false).classed('related', false).classed('excluded-by-focus', false);
   d3.selectAll('.link-group').classed('dim', false).classed('highlight', false);
   d3.selectAll('.link-group').select('path.link').attr('marker-end', d => d.exclusion ? null : (d.alt ? 'url(#arrow-alt)' : 'url(#arrow-default)'));
@@ -1762,77 +1780,6 @@ function buildLegend() {
     };
     el.appendChild(pill);
   });
-}
-
-// ---------- Programs / certificates ----------
-let activeCert = null;
-function buildPrograms() {
-  const el = document.getElementById('programs');
-  el.innerHTML = '';
-  Object.entries(CERT_INFO).forEach(([key, info]) => {
-    const pill = document.createElement('span');
-    pill.className = 'legend-pill cert';
-    pill.dataset.cert = key;
-    pill.innerHTML = `<span class="legend-dot" style="background:${info.color}"></span>${info.label}`;
-    pill.onclick = () => toggleCertificate(key);
-    el.appendChild(pill);
-  });
-}
-function coursesInCert(key) {
-  const direct = new Set();
-  Object.entries(COURSE_META).forEach(([code, meta]) => {
-    if (meta.certs?.includes(key)) direct.add(code);
-  });
-  return direct;
-}
-function toggleCertificate(key) {
-  if (activeCert === key) {
-    activeCert = null;
-    document.querySelectorAll('#programs .legend-pill').forEach(p => {
-      p.classList.remove('active');
-      p.style.background = '';
-      p.style.borderColor = '';
-      p.style.color = '';
-    });
-    clearFocus();
-    return;
-  }
-  activeCert = key;
-  state.focusCode = null;
-  const info = CERT_INFO[key];
-  document.querySelectorAll('#programs .legend-pill').forEach(p => {
-    if (p.dataset.cert === key) {
-      p.classList.add('active');
-      p.style.background = info.color;
-      p.style.borderColor = info.color;
-      p.style.color = '#fff';
-    } else {
-      p.classList.remove('active');
-      p.style.background = '';
-      p.style.borderColor = '';
-      p.style.color = '';
-    }
-  });
-  // Light up direct courses + every prerequisite chain that leads to them
-  const direct = coursesInCert(key);
-  const lit = new Set();
-  direct.forEach(code => {
-    if (!state.byCode[code]) return;
-    reachable(code, state.parents).forEach(c => lit.add(c));
-  });
-  d3.selectAll('.node')
-    .classed('dim', d => !lit.has(d.code))
-    .classed('focus', false)
-    .classed('related', d => lit.has(d.code));
-  d3.selectAll('.link-group')
-    .classed('dim', d => !(lit.has(d.source) && lit.has(d.target)))
-    .classed('highlight', d => lit.has(d.source) && lit.has(d.target));
-  d3.selectAll('.link-group').select('path.link')
-    .attr('marker-end', d => {
-      if (d.exclusion) return null;
-      if (d.alt) return 'url(#arrow-alt)';
-      return (lit.has(d.source) && lit.has(d.target)) ? 'url(#arrow-active)' : 'url(#arrow-default)';
-    });
 }
 
 // ---------- Search ----------
@@ -1883,7 +1830,7 @@ function openDetails(code) {
     b.style.color = '#0f172a'; b.style.borderColor = 'var(--line-strong)'; b.style.background = '#fff';
     badges.appendChild(b);
   }
-  // Certificate badges
+  // Certificate badges — clicking jumps to that certificate's view.
   (c.meta?.certs || []).forEach(cert => {
     const info = CERT_INFO[cert];
     if (!info) return;
@@ -1894,7 +1841,7 @@ function openDetails(code) {
     b.style.background = info.color;
     b.style.borderColor = info.color;
     b.style.cursor = 'pointer';
-    b.onclick = () => toggleCertificate(cert);
+    b.onclick = () => { location.hash = `#/cert/${cert}`; };
     badges.appendChild(b);
   });
   // Inactive banner (only for retired courses).
@@ -2265,6 +2212,8 @@ function viewFromHash() {
   if (h === '#/nonmajor')        return 'nonmajor';
   if (h === '#/ms')              return 'ms';
   if (h === '#/ms/accelerated')  return 'ms-accel';
+  if (h === '#/cert/cybersec')   return 'cert-cybersec';
+  if (h === '#/cert/cloud')      return 'cert-cloud';
   if (h === '#/cert/prog-fund')  return 'cert-prog-fund';
   if (h === '#/cert/comp-sec')   return 'cert-comp-sec';
   if (h === '#/cert/info-sys')   return 'cert-info-sys';
@@ -2280,9 +2229,6 @@ function applyView(v, { animate = true } = {}) {
   });
   document.getElementById('view-title').textContent = view.title;
   document.getElementById('view-subtitle').textContent = view.subtitle;
-  // The Programs (certificates) section is only meaningful in the BS view.
-  const progSection = document.getElementById('programs')?.parentElement;
-  if (progSection) progSection.style.display = (view.key === 'bs') ? '' : 'none';
   // Render program-rules block (currently only MS and Accelerated have rules).
   const rulesSection = document.getElementById('rules-section');
   const rulesList = document.getElementById('rules-list');
@@ -2308,7 +2254,6 @@ window.addEventListener('hashchange', () => applyView(viewFromHash()));
 
 // ---------- Initial load ----------
 buildLegend();
-buildPrograms();
 // Paint with the embedded default first so something is on-screen instantly,
 // then upgrade with whatever the admin has stored in KV.
 state.view = viewFromHash();
